@@ -25,12 +25,14 @@
  * `authorizeSecretEgress`, which is per-item, single-use, and audited.
  *
  * ── WHAT WAS DROPPED IN THE EXTRACTION ─────────────────────────────────────
- * The upstream `dimaag_override_unlock` MCP tool wrote a short-TTL unlock flag
- * that raised the ceiling for SUBSEQUENT calls. It is deprecated by decision
- * and is NOT part of Sutra Core's 14-tool surface. The reason is worth stating:
- * a time-boxed ambient flag means a later request is answered at a ceiling
- * nobody re-authorised for it, which makes the audit line "who asked for this?"
- * unanswerable. The inline form below is per-request and carries its own proof.
+ * The upstream MCP surface had an `override_unlock` tool that wrote a
+ * short-TTL unlock flag, raising the ceiling for SUBSEQUENT calls. It is
+ * deprecated by decision and is NOT part of Sutra Core's 14-tool surface.
+ *
+ * The reason is worth stating rather than just recording: a time-boxed AMBIENT
+ * flag means a later request is answered at a ceiling nobody authorised for
+ * THAT request, which makes the audit line "who asked for this?" unanswerable.
+ * The inline form below is per-request and carries its own proof.
  */
 
 import { timingSafeEqual } from "node:crypto";

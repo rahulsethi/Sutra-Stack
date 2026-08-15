@@ -22,7 +22,7 @@ import matter from "gray-matter";
 import { type Tier, coerceTier, isDoNotLearn, TIER_DISPLAY } from "../gate/tiers.js";
 import { sensitivityGuard } from "../gate/guard.js";
 import { loadPolicy, hasLivePromotion, appendRequest, type ExposurePolicy } from "../gate/exposure.js";
-import { DEFAULT_WALK_ROOTS } from "../config.js";
+import { DEFAULT_WALK_ROOTS, EXCLUDED_DIR_NAMES } from "../config.js";
 import type { VaultClient } from "./client.js";
 
 export interface NoteRef {
@@ -140,6 +140,10 @@ export class Brain {
     for (const e of entries) {
       const abs = join(absDir, e.name);
       if (e.isDirectory()) {
+        // Structure is not knowledge. `vault/config/` holds the conventions,
+        // schemas and TEMPLATES — and a template cited as a source is a
+        // confident, plausible, useless answer. See EXCLUDED_DIR_NAMES.
+        if (EXCLUDED_DIR_NAMES.has(e.name)) continue;
         yield* this.walkMdFiles(abs);
       } else if (e.isFile() && e.name.endsWith(".md") && e.name !== ".gitkeep") {
         yield abs;

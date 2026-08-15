@@ -15,6 +15,6 @@ export * from "./vault/index.js";
 export * from "./retrieval/index.js";
 export * from "./run/index.js";
 export * from "./config.js";
-export { auditLog, type AuditEvent } from "./audit/log.js";
-export { runPwsh, findPwsh, type PwshResult } from "./exec/pwsh.js";
+export * from "./audit/log.js";
+export * from "./exec/pwsh.js";
 export { listSkills, getSkill, type SkillRef, type SkillDetail } from "./skills/enumerate.js";

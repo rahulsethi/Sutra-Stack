@@ -78,13 +78,22 @@ export class VaultClient {
     return readFileSync(join(this.vaultRoot, rel), "utf8");
   }
 
-  /** Never throws — a missing directory is 0, not an exception. */
+  /**
+   * Never throws — a missing directory is 0, not an exception.
+   *
+   * Dotfiles are excluded. `.gitkeep` is what makes an empty directory survive
+   * a git clone, and counting it reported "1 raw intake file" on a vault that
+   * had just been created and contained nothing. A status line that is wrong on
+   * a fresh install is worse than one that is absent: it is the first number a
+   * new user sees, and it teaches them the numbers cannot be trusted.
+   */
   countFiles(rel: string, extFilter?: readonly string[]): number {
     const dir = join(this.vaultRoot, rel);
     if (!existsSync(dir)) return 0;
     try {
       return readdirSync(dir, { withFileTypes: true }).filter((e) => {
         if (!e.isFile()) return false;
+        if (e.name.startsWith(".")) return false;
         if (!extFilter) return true;
         return extFilter.some((x) => e.name.endsWith(x));
       }).length;

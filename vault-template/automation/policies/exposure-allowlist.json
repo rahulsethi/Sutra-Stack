@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "settings": { "default_expiry_days": 7 },
+  "projections": [],
+  "promotions": []
+}

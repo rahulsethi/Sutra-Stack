@@ -39,6 +39,26 @@ const EXEMPT = new Map([
   ["CHANGELOG.md", "generated from tags"],
 ]);
 
+/**
+ * Directory prefixes exempt from the header requirement, with the reason.
+ *
+ * `vault-template/vault/config/templates/` is the only one, and the reason is
+ * substantive rather than convenient: a TEMPLATE BECOMES THE USER'S NOTE. Its
+ * bytes are copied into a file the user owns, in a vault we have no rights over
+ * and no business licensing. An SPDX line in `daily-log.md` would appear at the
+ * top of every daily note that person ever writes, asserting a copyright claim
+ * over their own words.
+ *
+ * The templates are still Apache-2.0 as part of this distribution; the licence
+ * is declared for the whole directory in the file below, once, where it belongs.
+ */
+const EXEMPT_PREFIXES = new Map([
+  [
+    "vault-template/vault/config/templates/",
+    "a template's bytes become the user's own note — an SPDX line here would claim copyright over their writing. Licence declared in vault-template/vault/config/templates/README.md.",
+  ],
+]);
+
 const problems = [];
 const seen = { core: 0, ee: 0, exempt: 0, unchecked: 0 };
 
@@ -55,6 +75,7 @@ function* walk(dir) {
 for (const abs of walk(ROOT)) {
   const rel = relative(ROOT, abs).split(sep).join("/");
   if (EXEMPT.has(rel)) { seen.exempt++; continue; }
+  if ([...EXEMPT_PREFIXES.keys()].some((p) => rel.startsWith(p))) { seen.exempt++; continue; }
   if (!CHECKED.has(extname(abs))) { seen.unchecked++; continue; }
   if (statSync(abs).size === 0) continue;
 

@@ -1,0 +1,22 @@
+{
+  "name": "@sutra/cli",
+  "version": "1.0.0",
+  "description": "The `sutra` command line — every read supports --json, and the exit codes are a governance signal.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "sutra": "./dist/bin.js"
+  },
+  "files": ["dist", "README.md"],
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@sutra/core": "1.0.0",
+    "@sutra/mcp": "1.0.0"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "node --test dist"
+  }
+}

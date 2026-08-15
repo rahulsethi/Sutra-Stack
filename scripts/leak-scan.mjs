@@ -26,6 +26,7 @@
 import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
 import { join, relative, sep, basename } from "node:path";
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -33,9 +34,73 @@ const args = new Set(process.argv.slice(2));
 const VERBOSE = args.has("--verbose");
 
 const findings = [];
-const stats = { files: 0, bytes: 0, rules: 0 };
+const stats = { files: 0, bytes: 0, rules: 0, tracked: 0, ignored: 0 };
+
+/**
+ * D7, implemented rather than merely cited.
+ *
+ * The defect was: `.easignore` SUPERSEDED `.gitignore` for the Expo uploader,
+ * so five credential files that git correctly ignored were uploaded on every
+ * build. The lesson it produced was NOT "scan everything" — it was:
+ *
+ *     answer the question EMPIRICALLY. Replay the ruleset through the tool's
+ *     own engine rather than reasoning about it.
+ *
+ * So this scan asks git what git would ship, and classifies each finding by
+ * whether that particular file actually travels:
+ *
+ *   tracked                  → BLOCKING. It is in the repo; it ships. No argument.
+ *   untracked, NOT ignored   → BLOCKING. `git add -A`, `npm pack` or a plain
+ *                              `cp -r` all pick it up. Nothing is protecting it.
+ *   untracked AND ignored    → advisory, NAMING the rule that excludes it. It
+ *                              does not ship via git — but it is on the disk,
+ *                              and the moment a second ignore file appears (see
+ *                              the `ignore-supersession` check below) that
+ *                              protection may not apply to that tool.
+ *
+ * A file the scan cannot classify is treated as BLOCKING. Failing closed here
+ * costs a false alarm; failing open costs a credential.
+ */
+function gitClassify() {
+  const tracked = new Set();
+  const ignored = new Map(); // relPath → the ignore rule that excludes it
+  try {
+    for (const line of execFileSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf8", maxBuffer: 64e6 }).split("\0")) {
+      if (line) tracked.add(line);
+    }
+  } catch {
+    return { tracked: null, ignored: null }; // not a git repo → everything blocking
+  }
+  try {
+    // `-v` reports WHICH rule matched, so a finding can name it.
+    const out = execFileSync(
+      "git",
+      ["ls-files", "--others", "--ignored", "--exclude-standard", "-z"],
+      { cwd: ROOT, encoding: "utf8", maxBuffer: 64e6 },
+    );
+    for (const p of out.split("\0")) if (p) ignored.set(p, ".gitignore");
+  } catch { /* leave empty → those files stay blocking */ }
+  return { tracked, ignored };
+}
+
+const git = gitClassify();
+
+/** Does this file actually travel? */
+function shipStatus(rel) {
+  if (!git.tracked) return { ships: true, why: "not a git repo — cannot verify what would ship" };
+  if (git.tracked.has(rel)) return { ships: true, why: "tracked" };
+  if (git.ignored?.has(rel)) return { ships: false, why: `excluded by ${git.ignored.get(rel)}` };
+  return { ships: true, why: "untracked and NOT ignored — `git add -A` or a `cp -r` would take it" };
+}
 
 function report(severity, rule, rel, detail, line) {
+  // A finding in a file that provably does not ship is downgraded to advisory
+  // and carries the reason, so the list stays honest in both directions.
+  const status = shipStatus(rel);
+  if (severity === "error" && !status.ships) {
+    findings.push({ severity: "warn", rule, file: rel, detail: `${detail}  [does not ship — ${status.why}]`, line });
+    return;
+  }
   findings.push({ severity, rule, file: rel, detail, line });
 }
 

@@ -237,6 +237,30 @@ export function loadConfig(opts: { cwd?: string } = {}): SutraConfig {
  */
 export const DEFAULT_WALK_ROOTS = ["vault", "compiled/pages"];
 
+/**
+ * Directory names that are never content, even when they sit INSIDE a walk root.
+ *
+ * `vault/config/` is the case that motivated this, and it was found by running
+ * `sutra init` rather than by reading code: the first cited answer on a fresh
+ * install quoted `config/templates/source-note.md` — a scaffold full of
+ * `{{title}}` placeholders — as a source, because it is a `.md` file under
+ * `vault/`.
+ *
+ * It is the same shape of defect as D22 (a review queue that was 97% machine
+ * artifacts): a surface filled with the system's own furniture is a surface
+ * nobody can use, and the answer LOOKED plausible, which is worse than an
+ * obvious break. Structure is not knowledge, and a retrieval layer that cannot
+ * tell the difference will confidently cite a template.
+ */
+export const EXCLUDED_DIR_NAMES: ReadonlySet<string> = new Set([
+  "config",       // conventions, schemas, templates — the vault's own furniture
+  ".git",
+  ".obsidian",
+  ".trash",
+  "node_modules",
+  ".sutra",
+]);
+
 /** THE EXPOSURE CEILING. Read from the environment ONCE, at startup. */
 export function ceilingFromEnv(
   env: NodeJS.ProcessEnv = process.env,

@@ -297,3 +297,29 @@ test("search ranking is deterministic across runs", () => {
   const a2 = b.search("widget", 12).hits.map((h) => h.relPath);
   assert.deepEqual(a1, a2);
 });
+
+test("vault/config/ is NOT content — a template must never be cited as a source", () => {
+  // Found by RUNNING `sutra init`, not by reading code: the first cited answer
+  // on a fresh install quoted `config/templates/source-note.md` — a scaffold
+  // full of `{{title}}` placeholders — because it is a .md file under vault/.
+  // The answer looked plausible, which is what made it worth a structural fix.
+  const r = newRoot();
+  seed(r, "vault/config/templates/source-note.md", { type: "Template" }, "# Source manifest — {{title}}");
+  seed(r, "vault/config/frontmatter-conventions.md", { type: "Doc" }, "conventions");
+  seed(r, "vault/real-note.md", { type: "Note", sensitivity: "public" }, "real knowledge");
+
+  const corpus = new Brain(fakeVc(r), "local_only").visibleCorpus();
+  assert.deepEqual(corpus.notes.map((n) => n.relPath), ["vault/real-note.md"]);
+  assert.ok(!JSON.stringify(corpus).includes("{{title}}"), "a template leaked into the corpus");
+});
+
+test("an excluded directory is not merely gated — it is not WALKED", () => {
+  // The distinction matters: gating counts a note as `withheld`, which would
+  // report the vault's own furniture as if the user had chosen to protect it.
+  const r = newRoot();
+  seed(r, "vault/config/templates/x.md", { type: "Template" }, "scaffold");
+  seed(r, "vault/ok.md", { type: "Note", sensitivity: "public" }, "real");
+  const report = new Brain(fakeVc(r), "hosted_allowed").gateInspect();
+  assert.equal(report.scanned, 1, "the template must not be counted at all");
+  assert.equal(report.withheld_by_tier.private, 0);
+});
