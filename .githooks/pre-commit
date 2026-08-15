@@ -1,0 +1,46 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+#
+# D6 — THIS FILE IS TRACKED, AND THAT IS THE POINT.
+#
+# The upstream hook lived untracked in .git/hooks/, `core.hooksPath` was unset,
+# and so ENFORCEMENT DID NOT SURVIVE A CLONE. Every fresh clone silently had no
+# secret scanning while everyone believed it did.
+#
+# Install once, per clone:
+#     git config core.hooksPath .githooks
+# `sutra init` does this for you; CONTRIBUTING.md says so too.
+#
+# FAILS CLOSED. If pwsh or the scanner is missing, the commit is REFUSED rather
+# than allowed — a guard that disappears quietly is not a guard.
+#
+# ONE interpreter spawn. Budget: sub-second regardless of file count. The
+# upstream version spawned one `grep` per staged file at ~1.05s each, which
+# meant ten-plus minutes on a large commit and, inevitably, `--no-verify` as
+# standing policy: 128 occurrences across 91 files.
+
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+SCANNER="$ROOT/automation/scripts/governance/Invoke-SecretScan.ps1"
+
+if ! command -v pwsh >/dev/null 2>&1; then
+  echo ""
+  echo "  COMMIT REFUSED — PowerShell 7 (\`pwsh\`) is not on PATH, so the secret"
+  echo "  scanner cannot run."
+  echo ""
+  echo "  This fails closed on purpose. Install pwsh (it is a declared Sutra"
+  echo "  prerequisite and is cross-platform), or run \`sutra doctor\`."
+  echo ""
+  exit 1
+fi
+
+if [ ! -f "$SCANNER" ]; then
+  echo ""
+  echo "  COMMIT REFUSED — the secret scanner is missing:"
+  echo "    $SCANNER"
+  echo ""
+  exit 1
+fi
+
+exec pwsh -NoProfile -NonInteractive -File "$SCANNER" -Staged -InstallRoot "$ROOT"

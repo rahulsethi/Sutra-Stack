@@ -1,0 +1,181 @@
+{
+  "$comment": [
+    "SPDX-License-Identifier: Apache-2.0",
+    "",
+    "THE SYNTHESIS ROUTER's configuration. This is `sutra route` — the pipeline's",
+    "own model chain. It is NOT your harness's chat model, and Sutra never reads,",
+    "writes or owns that (S9.4: touch only your own keys, ever).",
+    "",
+    "D8: the upstream system had two routers with different provider orders, and",
+    "editing one fixed nothing in the other. `sutra doctor` shows both side by",
+    "side, and every generated page records which one served it.",
+    "",
+    "SHIPS ACCOUNT-NEUTRAL. No model id tied to anyone's account, no `key_env`",
+    "name implying a particular subscription, no free-tier assumption. The leak",
+    "scan asserts this.",
+    "",
+    "D5: adding a provider here WITHOUT adding its key shape to",
+    "secret-patterns.json is a bug — a configurable provider the scanner cannot",
+    "see. CI asserts the two stay in step.",
+    "",
+    "EVERYTHING HERE IS OPTIONAL. Sutra's default is deterministic-only: with no",
+    "provider configured at all, retrieval, tiering, linking, the graph and cited",
+    "answers still work. A model adds prose synthesis on top of them and nothing",
+    "else. `enabled: false` on every entry below is the shipped default and is a",
+    "deliberate choice, not an oversight."
+  ],
+  "version": 1,
+
+  "$providers_comment": [
+    "ORDER IS THE FALLBACK ORDER. `local: true` means the model runs on THIS",
+    "machine, which is what makes it eligible for private and secret content.",
+    "",
+    "`local_only` content is served by a local provider or by nothing. There is",
+    "no configuration in this file that routes it to a hosted one, and",
+    "Select-Provider filters by tier before it considers anything else."
+  ],
+  "providers": [
+    {
+      "id": "ollama",
+      "kind": "openai-compatible",
+      "local": true,
+      "enabled": false,
+      "base_url_env": "OLLAMA_HOST",
+      "base_url": "http://127.0.0.1:11434/v1",
+      "model": "",
+      "key_env": null,
+      "reasoning_capable": false,
+      "excluded_tasks": [],
+      "notes": "An on-machine model. The ONLY kind eligible for private or secret content. Set `model` to whatever you have pulled; Sutra ships no default because a model id you do not have produces a confusing 404 rather than a clear 'not configured'."
+    },
+    {
+      "id": "openai",
+      "kind": "openai",
+      "local": false,
+      "enabled": false,
+      "base_url": "https://api.openai.com/v1",
+      "model": "",
+      "key_env": "OPENAI_API_KEY",
+      "reasoning_capable": true,
+      "excluded_tasks": [],
+      "notes": "Hosted. Eligible for `public` content only."
+    },
+    {
+      "id": "anthropic",
+      "kind": "anthropic",
+      "local": false,
+      "enabled": false,
+      "base_url": "https://api.anthropic.com/v1",
+      "model": "",
+      "key_env": "ANTHROPIC_API_KEY",
+      "reasoning_capable": true,
+      "excluded_tasks": [],
+      "notes": "Hosted. Eligible for `public` content only."
+    },
+    {
+      "id": "google",
+      "kind": "google",
+      "local": false,
+      "enabled": false,
+      "base_url": "https://generativelanguage.googleapis.com/v1beta",
+      "model": "",
+      "key_env": "GEMINI_API_KEY",
+      "reasoning_capable": true,
+      "excluded_tasks": [],
+      "notes": "Hosted. NOTE: free tiers have low daily caps. A maintenance job must never consume the quota a quality job depends on — see `tasks` below."
+    },
+    {
+      "id": "openrouter",
+      "kind": "openai-compatible",
+      "local": false,
+      "enabled": false,
+      "base_url": "https://openrouter.ai/api/v1",
+      "model": "",
+      "key_env": "OPENROUTER_API_KEY",
+      "reasoning_capable": true,
+      "excluded_tasks": [],
+      "notes": "Hosted aggregator."
+    },
+    {
+      "id": "groq",
+      "kind": "openai-compatible",
+      "local": false,
+      "enabled": false,
+      "base_url": "https://api.groq.com/openai/v1",
+      "model": "",
+      "key_env": "GROQ_API_KEY",
+      "reasoning_capable": false,
+      "excluded_tasks": ["synthesize_draft"],
+      "notes": "Fast, not reasoning-capable, so it is excluded from synthesis by policy rather than by hoping the router picks something better."
+    },
+    {
+      "id": "nvidia",
+      "kind": "openai-compatible",
+      "local": false,
+      "enabled": false,
+      "base_url_env": "NVIDIA_API_BASE",
+      "base_url": "https://integrate.api.nvidia.com/v1",
+      "model": "",
+      "key_env": "NVIDIA_API_KEY",
+      "reasoning_capable": true,
+      "excluded_tasks": [],
+      "notes": "D19 lived here: `base_url_env` is normally unset, and reading it unsafely threw before any network I/O — 2,109 times, every one recorded as a provider failure. `Get-EnvSafe` and the `parse_error` status exist because of this entry."
+    }
+  ],
+
+  "$tasks_comment": [
+    "PER-TASK POLICY. `requires_reasoning` is a FLOOR, not a preference: a",
+    "provider that fails it is excluded and NOTHING re-admits it (D17 — the",
+    "upstream fallback re-admitted the provider the floor had just excluded, and",
+    "a reasoning task was served by a model structurally barred from reasoning).",
+    "",
+    "`quota_class` exists because a COST BUG CAUSED A QUALITY BUG upstream:",
+    "curate and organize burned ~2,570 calls a night on unchanged content and",
+    "exhausted the quota synthesis depended on. Maintenance work must never",
+    "consume the budget quality work needs."
+  ],
+  "tasks": {
+    "synthesize_draft": {
+      "requires_reasoning": true,
+      "quota_class": "quality",
+      "notes": "Writes a durable page from an extract. NO INPUT CLIP, EVER (D1) — if a source exceeds the window, chunk-and-merge or refuse. A 6,000-char prefix produces a confident, fluent, 400-word page that is wrong in specifics, and nothing in the corpus looks anomalous."
+    },
+    "curate": {
+      "requires_reasoning": false,
+      "quota_class": "maintenance",
+      "notes": "Housekeeping. Must never starve `quality`."
+    },
+    "organize": {
+      "requires_reasoning": false,
+      "quota_class": "maintenance"
+    },
+    "cross_link": {
+      "requires_reasoning": false,
+      "quota_class": "maintenance"
+    },
+    "extract_entities": {
+      "requires_reasoning": true,
+      "quota_class": "quality"
+    },
+    "answer": {
+      "requires_reasoning": true,
+      "quota_class": "quality",
+      "notes": "Prose synthesis over retrieved sources. With no provider, `sutra ask` returns the cited context block — which is a real answer, not a failure."
+    }
+  },
+
+  "$degradation_comment": [
+    "Degradation is allowed. Silent degradation is not.",
+    "",
+    "Every stage may produce less than its ideal output. What it may never do is",
+    "produce less and report success. An unconfigured provider is a WARNING",
+    "naming the exact environment variable; an empty chain THROWS; a page that",
+    "no model wrote simply has no `synthesis_provider:` in its frontmatter, and",
+    "that absence is itself the signal."
+  ],
+  "degradation": {
+    "on_empty_chain": "throw",
+    "on_unconfigured": "warn-naming-the-variable",
+    "on_all_failed": "refuse-dont-stub"
+  }
+}

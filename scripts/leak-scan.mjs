@@ -284,22 +284,9 @@ function checkProviderNeutrality() {
 const SKIP_DIRS = new Set(["node_modules", ".git", "dist", "coverage", ".sutra"]);
 const BINARY_EXT = /\.(png|jpg|jpeg|gif|webp|ico|pdf|zip|gz|tgz|woff2?|ttf|otf|eot|mp3|wav|m4a|mp4|mov|wasm|node|exe|dll)$/i;
 
-// Files that legitimately contain the SHAPES this scan hunts for, because they
-// ARE the hunt. Kept deliberately short and exact — a broad exclusion is how a
-// leak scan quietly stops scanning.
-const SELF_REFERENTIAL = new Set([
-  "automation/policies/secret-patterns.json",
-  "scripts/leak-scan.mjs",
-  "packages/core/src/gate/patterns.ts",
-  "packages/core/src/gate/patterns.test.ts",
-  "automation/scripts/governance/Invoke-SecretScan.ps1",
-  ".githooks/pre-commit",
-  ".githooks/pre-commit.ps1",
-  "tests/fixtures/planted-secrets.md",
-  "Master_documentation/SECURITY.md",
-  "INHERITED-DEFECTS.md",
-  "CONTRIBUTING.md",
-]);
+// Declared in the PATTERN SET, not here — so this scan and the PowerShell
+// scanner cannot drift apart, and a reviewer has exactly one list to audit.
+const SELF_REFERENTIAL = new Set(patternSet.scanner_exempt_paths ?? []);
 
 function* walk(dir) {
   let entries;
