@@ -1,0 +1,21 @@
+* text=auto eol=lf
+
+*.ps1   text eol=lf
+*.sh    text eol=lf
+*.cmd   text eol=crlf
+*.bat   text eol=crlf
+
+# D12: an append-only per-run metrics series. Two hosts appending rows must
+# merge without a conflict; `union` keeps both sides' rows. Deltas are computed
+# per host at read time (D35: mtime-ordered cross-host rows produce a phantom
+# shrink), so interleaving is safe.
+*.metrics.csv merge=union
+metrics.csv   merge=union
+
+# Fixtures are byte-exact inputs to guards. Never let a line-ending
+# normalisation silently change what a guard is tested against.
+tests/fixtures/** -text
+
+assets/fonts/** binary
+*.png binary
+*.woff2 binary

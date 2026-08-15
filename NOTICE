@@ -1,0 +1,10 @@
+Sutra Core
+Copyright 2026 Rahul Sethi
+
+This product includes software developed as part of the Sutra project.
+
+---
+
+This distribution contains a commercially-licensed subtree at `ee/`, which is
+NOT covered by the Apache License, Version 2.0. See `ee/LICENSE`.
+Deleting `ee/` leaves a complete, functional, Apache-2.0-licensed product.

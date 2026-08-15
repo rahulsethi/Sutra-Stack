@@ -1,0 +1,27 @@
+{
+  "name": "@sutra/core",
+  "version": "1.0.0",
+  "description": "The Sutra governance core — tier model, exposure gate, redaction, override, floored write, audit. One dependency.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./gate": "./dist/gate/index.js",
+    "./vault": "./dist/vault/index.js",
+    "./retrieval": "./dist/retrieval/index.js",
+    "./run": "./dist/run/index.js"
+  },
+  "files": ["dist", "README.md"],
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "node --test dist"
+  }
+}

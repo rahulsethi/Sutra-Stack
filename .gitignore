@@ -1,0 +1,85 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Sutra .gitignore
+#
+# WARNING — read before adding a rule.
+#
+# D36: the knowledge graph's only input store was gitignored, so the graph was
+# unreproducible off one laptop. The rule that follows from it:
+#
+#     If an artifact is a pure function of an input, the input is the thing you
+#     must not lose. Committing only the output is a backup illusion.
+#
+# NEVER add an ignore rule that covers a builder's *input* directory. CI enforces
+# this (`graph/store-is-tracked`, invariant I19): every input path a builder
+# resolves must be inside the repo, not matched by any ignore rule, and non-empty.
+#
+# D7: an ignore file is an EGRESS SURFACE. `.easignore` once superseded
+# `.gitignore` entirely for Expo uploads and shipped five credential files. If
+# you add `.npmignore` / `.dockerignore` / `.vercelignore` / `.easignore`, it
+# needs its own entry in tests/leak/ignore-supersession.test.ts.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Build output ─────────────────────────────────────────────────────────────
+node_modules/
+dist/
+*.tsbuildinfo
+.npm/
+
+# ── Secrets: nothing matching these may ever be tracked ──────────────────────
+# The pre-commit hook is the enforcement; this is defence in depth.
+.env
+.env.*
+!.env.example
+*.local.*
+!*.local.example.*
+**/secrets/**
+*.age
+*.pem
+*.key
+!packages/**/*.key.ts
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+Keys.md
+credentials.json
+
+# ── Per-machine runtime state ────────────────────────────────────────────────
+# D9: lock files are per-machine. Committed, they arrive on another host as
+# un-reclaimable foreign locks.
+*.lock.json
+.sutra/locks/
+.sutra/run/
+.sutra/cache/
+
+# ── OS / editor ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# ── The user's vault is NEVER in this repo ───────────────────────────────────
+# `vault-template/` (tracked, zero notes) is the skeleton. A real vault is a
+# separate, user-owned git repo that the CLI points at by path — deliberately
+# not a submodule (D25: a submodule reconcile on a node that runs its own
+# pipeline is a data-loss trap).
+/vault/
+/dimaag/
+/my-vault/
+
+# ── Local tool output ────────────────────────────────────────────────────────
+graphify-out/.graphify_python
+graphify-out/.graphify_root
+graphify-out/cache/
+coverage/
+*.log
+!automation/**/*.log.example
+
+# ── Explicitly NOT ignored (kept here as executable documentation) ───────────
+# vault-template/**            the skeleton ships
+# automation/**                the pipeline ships
+# tests/fixtures/**            fixtures are inputs to guards; they must travel
+# **/graph/batches/**          D36 — builder input, primary data, must be tracked

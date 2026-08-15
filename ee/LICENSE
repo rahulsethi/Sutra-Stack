@@ -1,0 +1,103 @@
+SUTRA ENTERPRISE EDITION LICENSE
+Copyright 2026 Rahul Sethi. All rights reserved.
+
+================================================================================
+THIS SUBTREE IS NOT OPEN SOURCE.
+================================================================================
+
+Everything inside the `ee/` directory of this repository — and ONLY what is
+inside `ee/` — is licensed under these commercial terms. It is **not** covered
+by the Apache License, Version 2.0 that governs the rest of this repository.
+
+The root `LICENSE` file (Apache-2.0) does not apply to any file under `ee/`.
+This file does not apply to any file outside `ee/`.
+
+If you are reading a source file and are unsure which licence governs it, the
+rule is exactly this: **is its path inside `ee/`?** Every file additionally
+carries an SPDX identifier in its header:
+
+    SPDX-License-Identifier: Apache-2.0                     — Core, open
+    SPDX-License-Identifier: LicenseRef-Sutra-Commercial    — ee/, commercial
+
+--------------------------------------------------------------------------------
+1. CORE IS COMPLETE WITHOUT THIS SUBTREE
+--------------------------------------------------------------------------------
+
+`rm -rf ee/` leaves a fully functional, fully tested, Apache-2.0-licensed
+product. This is enforced mechanically: continuous integration deletes `ee/`
+and runs the complete Core test suite on every commit. Core does not import
+from `ee/`, and never will.
+
+You are under no obligation to use, build, or retain this subtree.
+
+--------------------------------------------------------------------------------
+2. GRANT
+--------------------------------------------------------------------------------
+
+Subject to a valid, current commercial subscription agreement with the Licensor
+("Subscription"), Licensor grants you a non-exclusive, non-transferable,
+non-sublicensable, revocable licence to:
+
+  (a) use the software in `ee/` in object or source form, internally, within
+      your own organisation, on infrastructure you control;
+  (b) modify it for your own internal use; and
+  (c) make a reasonable number of copies for backup and disaster recovery.
+
+--------------------------------------------------------------------------------
+3. RESTRICTIONS
+--------------------------------------------------------------------------------
+
+Without a separate written agreement from the Licensor, you may NOT:
+
+  (a) distribute, sublicense, sell, rent, lease, or lend the software in `ee/`,
+      in source or object form, to any third party;
+  (b) offer the software in `ee/` as a hosted or managed service to third
+      parties;
+  (c) remove, obscure, or alter any copyright, licence, or SPDX notice;
+  (d) use the software in `ee/` outside the scope, seat count, or term of your
+      Subscription; or
+  (e) circumvent any licence-key, entitlement, or usage-metering mechanism.
+
+--------------------------------------------------------------------------------
+4. EVALUATION
+--------------------------------------------------------------------------------
+
+Absent a Subscription, you may use the software in `ee/` solely to evaluate it,
+in a non-production environment, for up to thirty (30) days. Evaluation use is
+provided without warranty and without support, and confers no other rights.
+
+--------------------------------------------------------------------------------
+5. CONTRIBUTIONS
+--------------------------------------------------------------------------------
+
+The Licensor does not accept outside contributions into `ee/` except under a
+signed Contributor Licence Agreement (see `CONTRIBUTING.md`). Contributions to
+Core are governed by Apache-2.0 plus the CLA, and do not grant any rights in
+`ee/`.
+
+--------------------------------------------------------------------------------
+6. TERM AND TERMINATION
+--------------------------------------------------------------------------------
+
+This licence runs with your Subscription and terminates automatically on its
+expiry or on your breach of these terms. On termination you must cease all use
+of `ee/` and destroy all copies. Termination of this licence has no effect
+whatsoever on your Apache-2.0 rights in Core.
+
+--------------------------------------------------------------------------------
+7. NO WARRANTY; LIMITATION OF LIABILITY
+--------------------------------------------------------------------------------
+
+EXCEPT AS EXPRESSLY STATED IN A SIGNED SUBSCRIPTION AGREEMENT, THE SOFTWARE IN
+`ee/` IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE LICENSOR BE
+LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE
+SOFTWARE OR ITS USE.
+
+--------------------------------------------------------------------------------
+8. CONTACT
+--------------------------------------------------------------------------------
+
+For a Subscription, or for terms not covered above, contact the Licensor.

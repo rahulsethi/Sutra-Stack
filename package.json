@@ -1,0 +1,38 @@
+{
+  "name": "sutra",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sutra — a governed personal knowledge substrate. Your AI can reason over everything you know, and provably cannot leak what you marked private.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/core",
+    "packages/mcp",
+    "packages/cli",
+    "packages/daemon",
+    "packages/dashboard"
+  ],
+  "scripts": {
+    "build": "tsc --build packages/core packages/mcp packages/cli packages/daemon packages/dashboard",
+    "build:clean": "tsc --build --clean packages/core packages/mcp packages/cli packages/daemon packages/dashboard",
+    "test": "npm run build && node --test packages/core/dist packages/mcp/dist packages/cli/dist packages/daemon/dist",
+    "test:core": "npm run build && node --test packages/core/dist",
+    "test:defects": "npm run build && node --test tests/defects",
+    "test:e2e": "npm run build && node --test tests/e2e",
+    "typecheck": "tsc --build --dry packages/core packages/mcp packages/cli",
+    "check:license": "node scripts/check-license-headers.mjs",
+    "check:core-alone": "node scripts/check-core-alone.mjs",
+    "check:no-bun": "node scripts/check-no-bun.mjs",
+    "leak-scan": "node scripts/leak-scan.mjs",
+    "third-party": "node scripts/gen-third-party-notices.mjs",
+    "verify": "npm run build && npm test && npm run check:license && npm run check:no-bun && npm run leak-scan && npm run check:core-alone",
+    "sutra": "node packages/cli/dist/bin.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.9",
+    "typescript": "^5.9.2"
+  }
+}
