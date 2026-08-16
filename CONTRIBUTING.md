@@ -55,7 +55,8 @@ well-specified issue is often worth more than the patch.
 ## 3 · What makes a good contribution here
 
 Sutra has an unusual and non-negotiable core discipline, inherited from the
-system it was extracted from. Read [`GOVERNANCE.md`](Master_documentation/GOVERNANCE.md)
+system it was extracted from. Read [`CLAUDE.md`](CLAUDE.md) §2 and
+[`Master_documentation/06-mechanisms/`](Master_documentation/06-mechanisms/README.md)
 before touching anything under `packages/core/src/gate/`.
 
 **The eight invariants** (`CLAUDE.md` §3) are the product. In particular:
@@ -84,7 +85,7 @@ Concretely:
   guardrail test that has never been seen to fail is not evidence of anything.
 - A new guard ships with a **positive-coverage fixture**: something it must
   match. A rule that fires zero times looks exactly like a rule protecting a
-  clean corpus. (This is [D4](../INHERITED-DEFECTS.md); one of the three
+  clean corpus. (This is [D4](INHERITED-DEFECTS.md); one of the three
   secret-floor layers had never once fired.)
 - A defect from [`INHERITED-DEFECTS.md`](INHERITED-DEFECTS.md) is closed only
   when its named test exists, fails against a planted instance, and passes
@@ -153,4 +154,4 @@ commits were scanned while every large commit skipped the scan.
 ## 5 · Reporting a security issue
 
 **Do not open a public issue for a vulnerability in the gate.** See
-[`SECURITY.md`](SECURITY.md).
+[`Master_documentation/SECURITY.md`](Master_documentation/SECURITY.md).

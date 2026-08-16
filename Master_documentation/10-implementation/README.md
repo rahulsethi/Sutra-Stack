@@ -29,6 +29,7 @@ Milestones follow `BUILD-PLAN.md`. A milestone is done when its verify-check
 | M8 | Optional daemon + dashboard | **done** | 15 tests. `assertBindPolicy` refuses a non-loopback bind with no secret and no TLS. |
 | — | Sutra Enterprise (`ee/`, E1–E7) | **done** | 23 tests including the exhaustive narrows-only sweep over all 162 combinations. |
 | — | Diagrams | **done** | `npm run check:diagrams` → *6 diagrams, all dark, masked, legended, offline-safe*. Two verified visually in a browser. |
+| — | Persona layer (`core/persona/`) | **done** | 16 tests. Lifted per the extraction manifest; `routeTurn` composes the gate rather than restating it. |
 | — | Defect manifest as tests | **partial** | 17 tests across D1, I13, §9.1, D28, D29. **Not all 39 defects have a named test** — see drift. |
 
 ---
@@ -71,12 +72,21 @@ Numbers 5 and 7 are the same lesson twice: **measuring the wrong thing** rather
 than lacking data. The upstream register recorded that four of its own six wrong
 claims had that cause.
 
+| 10 | **A question from the owner** — "I do not see Dimaag or Parvo or Aatma listed there?" | The naming collapse was deliberate and documented, but `packages/core/src/persona/` had been **created at M0 and never filled** — the extraction manifest says LIFT. It sat empty for the entire build, invisible because **git does not track empty directories**, so it appeared in no clone and no diff. `INHERITED-DEFECTS.md` was likewise linked from four docs and never shipped. |
+
 Number 9 is the argument for the cross-OS matrix, made by the matrix itself on
 its first run. The test was already correct — it asserted **segment count**
 rather than "the string contains no backslash", precisely because the naive
 assertion passes vacuously on Windows, where the correct output and the bug are
 character-identical. A test that could only fail on the platform that does not
 exercise the bug would have proved nothing.
+
+Number 10 is the one no automated check was looking for, and it is now covered:
+`tests/defects/dangling-references.test.ts` asserts that no source directory is
+empty, that every path a governance file names exists, that CLAUDE.md's repo map
+matches the tree, and that every relative link in a shipped doc resolves. All
+four are the same shape — **a reference to something that does not exist** — and
+all four were true of this repo when the question was asked.
 
 ---
 

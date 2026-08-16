@@ -14,6 +14,7 @@ export * from "./gate/index.js";
 export * from "./vault/index.js";
 export * from "./retrieval/index.js";
 export * from "./run/index.js";
+export * from "./persona/index.js";
 export * from "./config.js";
 export * from "./audit/log.js";
 export * from "./exec/pwsh.js";

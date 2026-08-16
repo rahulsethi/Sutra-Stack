@@ -155,6 +155,7 @@ packages/core/       @sutra/core   — the governance core. ONE dependency.
   src/vault/         client · brain (the gated corpus) · capture (the floored write)
   src/retrieval/     lexical (BM25+RRF) · semantic · graph · hybrid · section · ask
   src/run/           outcome · metrics · lock
+  src/persona/       routing (turn local-vs-hosted) · prompt (the gated system prompt)
   src/audit/         log · provider health
 packages/mcp/        sutra-mcp    — stdio JSON-RPC, 14 tools. ZERO dependencies.
 packages/cli/        sutra        — --json everywhere; exit codes are governance signals

@@ -20,6 +20,7 @@
 | `vault/` | `client` (I/O, knows nothing about tiers) · `brain` (**the gated corpus walk**) · `capture` (the floored write) |
 | `retrieval/` | `lexical` (BM25+RRF, always works) · `semantic` · `graph` · `hybrid` · `section` · `ask` |
 | `run/` | `outcome` (five counters) · `metrics` (per-host series) · `lock` (ranked) |
+| `persona/` | `routing` (a turn's local-vs-hosted decision, composed from the gate — never a re-implementation) · `prompt` (the system prompt, assembled from the ALREADY-GATED identity bundle) |
 | `audit/` | append-only log, rotation, provider health |
 | `quality/` | capture-ratio banding |
 
