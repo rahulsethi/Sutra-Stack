@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sutra — The Three Shapes</title>
+  <link rel="stylesheet" href="assets/diagram.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--nc-font-mono); background: var(--nc-bg); min-height: 100vh; padding: 2rem; color: var(--nc-text); }
+    .container { max-width: 1280px; margin: 0 auto; }
+    .header { margin-bottom: 2rem; }
+    .header-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+    .pulse-dot { width: 12px; height: 12px; background: #94a3b8; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+    .subtitle { color: var(--nc-text-muted); font-size: 0.875rem; margin-left: 1.75rem; max-width: 92ch; line-height: 1.6; }
+    .diagram-container { background: var(--nc-surface); border-radius: var(--nc-radius-lg); border: 1px solid var(--nc-border); padding: 1.5rem; overflow: hidden; }
+    svg { width: 100%; display: block; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap: 1rem; margin-top: 2rem; }
+    .card { background: var(--nc-surface); border-radius: var(--nc-radius); border: 1px solid var(--nc-border); padding: 1.25rem; }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .card-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .card-dot.violet { background: #a78bfa; } .card-dot.cyan { background: #22d3ee; } .card-dot.emerald { background: #34d399; }
+    .card-dot.amber { background: #fbbf24; } .card-dot.rose { background: #fb7185; } .card-dot.slate { background: #94a3b8; }
+    .card h3 { font-size: 0.875rem; font-weight: 600; }
+    .card ul { list-style: none; color: var(--nc-text-muted); font-size: 0.75rem; line-height: 1.55; }
+    .card li { margin-bottom: 0.5rem; }
+    .footer { text-align: center; margin-top: 1.5rem; color: var(--nc-text-faint); font-size: 0.75rem; }
+    .toolbar { display: flex; gap: 0.5rem; margin-left: auto; flex-shrink: 0; align-items: center; }
+    .toolbar-toggle { background: transparent; border: none; color: var(--nc-text-faint); cursor: pointer; font-size: 1.25rem; line-height: 1; padding: 0.25rem 0.5rem; border-radius: 0.375rem; transition: color .2s, background .2s; }
+    .toolbar-toggle:hover { color: var(--nc-text-muted); background: rgba(30,41,59,0.5); }
+    .toolbar-actions { display: none; gap: 0.5rem; }
+    .toolbar.expanded .toolbar-actions { display: flex; }
+    .toolbar-actions button { background: rgba(30,41,59,0.8); border: 1px solid var(--nc-border-bright); color: var(--nc-text-muted); padding: 0.375rem 0.75rem; border-radius: 0.375rem; font-family: inherit; font-size: 0.75rem; cursor: pointer; transition: all .2s; white-space: nowrap; }
+    .toolbar-actions button:hover { background: rgba(51,65,85,0.8); color: white; border-color: #475569; }
+    @media print { body { background: #020617; padding: 1rem; } .toolbar, .zoom-bar { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="container" id="report-container">
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1>Three shapes — the user chooses one</h1>
+        <div class="toolbar">
+          <div class="toolbar-actions">
+            <button onclick="copyAsImage(this)">📋 Copy</button>
+            <button onclick="downloadPNG(this)">🖼️ PNG</button>
+            <button onclick="downloadPDF(this)">📄 PDF</button>
+          </div>
+          <button class="toolbar-toggle" onclick="this.parentElement.classList.toggle('expanded')" title="Export options" aria-label="Export options">⋯</button>
+        </div>
+      </div>
+      <p class="subtitle">Each shape is a complete product. <strong>(a) needs no account, no key and no network.</strong> Each later shape adds a surface without changing the gate: the ceiling differs, the enforcement does not.</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1180 620">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      <rect x="30" y="30" width="350" height="430" rx="12" fill="#34d3990d" stroke="#34d399" stroke-width="1" stroke-dasharray="8,4" opacity="0.6"/>
+      <text x="44" y="50" fill="#34d399" font-size="10" font-weight="600" opacity="0.9">(a) CLI ONLY  —  ~5 min</text>
+      <rect x="60" y="80" width="290" height="65" rx="6" fill="#0f172a"/>
+      <rect x="60" y="80" width="290" height="65" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="205" y="102" fill="white" font-size="11" font-weight="600" text-anchor="middle">sutra</text>
+      <text x="205" y="118" fill="#94a3b8" font-size="9" text-anchor="middle">ask · search · gate · capture</text>
+      <rect x="60" y="175" width="290" height="65" rx="6" fill="#0f172a"/>
+      <rect x="60" y="175" width="290" height="65" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="205" y="197" fill="white" font-size="11" font-weight="600" text-anchor="middle">automation/</text>
+      <text x="205" y="213" fill="#94a3b8" font-size="9" text-anchor="middle">cron or by hand</text>
+      <rect x="60" y="270" width="290" height="65" rx="6" fill="#0f172a"/>
+      <rect x="60" y="270" width="290" height="65" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="205" y="292" fill="white" font-size="11" font-weight="600" text-anchor="middle">your vault</text>
+      <text x="205" y="308" fill="#94a3b8" font-size="9" text-anchor="middle">markdown + git</text>
+      <text x="205" y="365" fill="#34d399" font-size="9.5" font-weight="600" text-anchor="middle">zero accounts · zero keys</text>
+      <text x="205" y="381" fill="#34d399" font-size="9.5" font-weight="600" text-anchor="middle">zero network</text>
+      <text x="205" y="404" fill="#94a3b8" font-size="9" text-anchor="middle">Node ≥20 · git · pwsh 7</text>
+      <text x="205" y="428" fill="#94a3b8" font-size="9" text-anchor="middle">Answers are the cited sources</text>
+      <text x="205" y="442" fill="#94a3b8" font-size="9" text-anchor="middle">themselves — a real answer.</text>
+      <rect x="410" y="30" width="350" height="430" rx="12" fill="#22d3ee0d" stroke="#22d3ee" stroke-width="1" stroke-dasharray="8,4" opacity="0.6"/>
+      <text x="424" y="50" fill="#22d3ee" font-size="10" font-weight="600" opacity="0.9">(b) PLUGIN INTO A HARNESS  ⭐ default  —  +2 min</text>
+      <rect x="440" y="80" width="290" height="65" rx="6" fill="#0f172a"/>
+      <rect x="440" y="80" width="290" height="65" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+      <text x="585" y="102" fill="white" font-size="11" font-weight="600" text-anchor="middle">everything in (a)</text>
+      <text x="585" y="118" fill="#94a3b8" font-size="9" text-anchor="middle">unchanged</text>
+      <rect x="440" y="175" width="290" height="65" rx="6" fill="#0f172a"/>
+      <rect x="440" y="175" width="290" height="65" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="585" y="197" fill="white" font-size="11" font-weight="600" text-anchor="middle">sutra-mcp</text>
+      <text x="585" y="213" fill="#94a3b8" font-size="9" text-anchor="middle">14 tools over stdio</text>
+      <rect x="440" y="270" width="290" height="65" rx="6" fill="#0f172a"/>
+      <rect x="440" y="270" width="290" height="65" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="585" y="292" fill="white" font-size="11" font-weight="600" text-anchor="middle">your harness</text>
+      <text x="585" y="308" fill="#94a3b8" font-size="9" text-anchor="middle">Claude Code · Hermes · Codex</text>
+      <text x="585" y="365" fill="#22d3ee" font-size="9.5" font-weight="600" text-anchor="middle">the harness brings the model,</text>
+      <text x="585" y="381" fill="#22d3ee" font-size="9.5" font-weight="600" text-anchor="middle">the keys, the chat, the scheduling</text>
+      <text x="585" y="404" fill="#94a3b8" font-size="9" text-anchor="middle">We do not build a chat UI, a model</text>
+      <text x="585" y="418" fill="#94a3b8" font-size="9" text-anchor="middle">router, or a bot framework. They</text>
+      <text x="585" y="432" fill="#94a3b8" font-size="9" text-anchor="middle">already exist, and they are better.</text>
+      <rect x="790" y="30" width="360" height="430" rx="12" fill="#fb71850d" stroke="#fb7185" stroke-width="1" stroke-dasharray="8,4" opacity="0.6"/>
+      <text x="804" y="50" fill="#fb7185" font-size="10" font-weight="600" opacity="0.9">(c) FULL STACK  —  +10–20 min</text>
+      <rect x="820" y="80" width="300" height="65" rx="6" fill="#0f172a"/>
+      <rect x="820" y="80" width="300" height="65" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="970" y="102" fill="white" font-size="11" font-weight="600" text-anchor="middle">everything in (b)</text>
+      <text x="970" y="118" fill="#94a3b8" font-size="9" text-anchor="middle">unchanged</text>
+      <rect x="820" y="175" width="300" height="65" rx="6" fill="#0f172a"/>
+      <rect x="820" y="175" width="300" height="65" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="970" y="197" fill="white" font-size="11" font-weight="600" text-anchor="middle">@sutra/daemon</text>
+      <text x="970" y="213" fill="#94a3b8" font-size="9" text-anchor="middle">loopback by default</text>
+      <rect x="820" y="270" width="300" height="65" rx="6" fill="#0f172a"/>
+      <rect x="820" y="270" width="300" height="65" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="970" y="292" fill="white" font-size="11" font-weight="600" text-anchor="middle">@sutra/dashboard</text>
+      <text x="970" y="308" fill="#94a3b8" font-size="9" text-anchor="middle">graph · review · reveal</text>
+      <text x="970" y="365" fill="#fb7185" font-size="9.5" font-weight="600" text-anchor="middle">a non-loopback bind with no secret</text>
+      <text x="970" y="381" fill="#fb7185" font-size="9.5" font-weight="600" text-anchor="middle">and no TLS is REFUSED at startup</text>
+      <text x="970" y="404" fill="#94a3b8" font-size="9" text-anchor="middle">The ceiling keys off the BIND HOST,</text>
+      <text x="970" y="418" fill="#94a3b8" font-size="9" text-anchor="middle">never the client — an address that</text>
+      <text x="970" y="432" fill="#94a3b8" font-size="9" text-anchor="middle">merely looks local grants nothing.</text>
+      <line x1="380" y1="210" x2="410" y2="210" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowhead)" opacity="0.85"/>
+      <rect x="379" y="195" width="32" height="14" rx="3" fill="#020617" opacity="0.9"/>
+      <text x="395" y="205" fill="#94a3b8" font-size="8.5" text-anchor="middle">adds</text>
+      <line x1="760" y1="210" x2="790" y2="210" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowhead)" opacity="0.85"/>
+      <rect x="759" y="195" width="32" height="14" rx="3" fill="#020617" opacity="0.9"/>
+      <text x="775" y="205" fill="#94a3b8" font-size="8.5" text-anchor="middle">adds</text>
+      <rect x="30" y="490" width="1120" height="55" rx="8" fill="#0f172a"/>
+      <rect x="30" y="490" width="1120" height="55" rx="8" fill="rgba(6,78,59,0.2)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="590" y="513" fill="#34d399" font-size="11" font-weight="700" text-anchor="middle">THE GATE IS IDENTICAL IN ALL THREE</text>
+      <text x="590" y="532" fill="#94a3b8" font-size="9.5" text-anchor="middle">Shape (b) on two different harnesses must show byte-identical gate behaviour, differing only by the exposure env var.</text>
+      <text x="30" y="570" fill="#64748b" font-size="9" font-weight="600">LEGEND</text>
+      <rect x="30" y="580" width="11" height="11" rx="2" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="47" y="589" fill="#94a3b8" font-size="9">serve — it answers a question</text>
+      <rect x="210.60000000000002" y="580" width="11" height="11" rx="2" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+      <text x="227.60000000000002" y="589" fill="#94a3b8" font-size="9">derived — the pipeline produced it</text>
+      <rect x="418.20000000000005" y="580" width="11" height="11" rx="2" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="435.20000000000005" y="589" fill="#94a3b8" font-size="9">gate — it REFUSES</text>
+      <rect x="534" y="580" width="11" height="11" rx="2" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="551" y="589" fill="#94a3b8" font-size="9">authored — a person wrote it</text>
+      <rect x="709.2" y="580" width="11" height="11" rx="2" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="726.2" y="589" fill="#94a3b8" font-size="9">external — we do not own it</text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-header"><div class="card-dot emerald"></div><h3>(a) is a real product</h3></div>
+        <ul><li>With no key at all, retrieval, tiering, linking, the graph and <strong>cited answers</strong> work.</li><li>A first run that only announces its own limitations is not a product — so the deterministic answer is the <em>floor</em>, not the fallback.</li></ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot cyan"></div><h3>(b) is the default</h3></div>
+        <ul><li>The harness brings the model, keys, chat, channels and scheduling.</li><li>Sutra is the governed substrate they plug into — not a competitor to any of it.</li><li><code>sutra doctor --harness X</code> asserts <strong>14 tools AND a ceiling</strong> by speaking the protocol.</li></ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot rose"></div><h3>(c) must be removable</h3></div>
+        <ul><li>Release gate 5: uninstalling the daemon and dashboard breaks nothing in (a) or (b).</li><li>Enforced by them being separate packages that nothing else imports.</li></ul>
+      </div>
+    </div>
+
+    <p class="footer">Sutra · the three shapes · generated by scripts/diagrams.mjs · hand-laid inline SVG, no render step · renders offline</p>
+    <a class="gallery-link" href="index.html">← all diagrams</a>
+  </div>
+
+  <script src="assets/diagram.js"></script>
+  <script>
+    async function shot(){const el=document.getElementById('report-container');const r=el.getBoundingClientRect();const pad=32;return html2canvas(document.body,{backgroundColor:'#020617',scale:2,useCORS:true,ignoreElements:(e)=>e.classList&&(e.classList.contains('toolbar')||e.classList.contains('zoom-bar')),x:r.left+window.scrollX-pad,y:r.top+window.scrollY-pad,width:r.width+pad*2,height:r.height+pad*2});}
+    async function copyAsImage(btn){const o=btn.textContent;try{const c=await shot();const b=await new Promise(r=>c.toBlob(r,'image/png'));await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);btn.textContent='✓ Copied!';}catch(e){btn.textContent='✗ '+(e.message||'Failed').slice(0,20);}setTimeout(()=>btn.textContent=o,2200);}
+    async function downloadPNG(btn){const o=btn.textContent;btn.textContent='⏳ ...';try{const c=await shot();const a=document.createElement('a');a.download='shapes.png';a.href=c.toDataURL('image/png');a.click();btn.textContent='✓ Done!';}catch(e){btn.textContent='✗ '+(e.message||'Failed').slice(0,20);}setTimeout(()=>btn.textContent=o,2200);}
+    async function downloadPDF(btn){const o=btn.textContent;btn.textContent='⏳ ...';try{const c=await shot();const {jsPDF}=window.jspdf;const or=c.width>c.height?'landscape':'portrait';const p=new jsPDF({orientation:or,unit:'px',format:[c.width,c.height],hotfixes:['px_scaling']});p.addImage(c.toDataURL('image/png'),'PNG',0,0,c.width,c.height);p.save('shapes.pdf');btn.textContent='✓ Done!';}catch(e){btn.textContent='✗ '+(e.message||'Failed').slice(0,20);}setTimeout(()=>btn.textContent=o,2200);}
+  </script>
+</body>
+</html>

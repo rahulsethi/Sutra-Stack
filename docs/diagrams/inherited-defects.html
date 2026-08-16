@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sutra — Inherited Defects</title>
+  <link rel="stylesheet" href="assets/diagram.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--nc-font-mono); background: var(--nc-bg); min-height: 100vh; padding: 2rem; color: var(--nc-text); }
+    .container { max-width: 1280px; margin: 0 auto; }
+    .header { margin-bottom: 2rem; }
+    .header-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+    .pulse-dot { width: 12px; height: 12px; background: #fb7185; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+    .subtitle { color: var(--nc-text-muted); font-size: 0.875rem; margin-left: 1.75rem; max-width: 92ch; line-height: 1.6; }
+    .diagram-container { background: var(--nc-surface); border-radius: var(--nc-radius-lg); border: 1px solid var(--nc-border); padding: 1.5rem; overflow: hidden; }
+    svg { width: 100%; display: block; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap: 1rem; margin-top: 2rem; }
+    .card { background: var(--nc-surface); border-radius: var(--nc-radius); border: 1px solid var(--nc-border); padding: 1.25rem; }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .card-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .card-dot.violet { background: #a78bfa; } .card-dot.cyan { background: #22d3ee; } .card-dot.emerald { background: #34d399; }
+    .card-dot.amber { background: #fbbf24; } .card-dot.rose { background: #fb7185; } .card-dot.slate { background: #94a3b8; }
+    .card h3 { font-size: 0.875rem; font-weight: 600; }
+    .card ul { list-style: none; color: var(--nc-text-muted); font-size: 0.75rem; line-height: 1.55; }
+    .card li { margin-bottom: 0.5rem; }
+    .footer { text-align: center; margin-top: 1.5rem; color: var(--nc-text-faint); font-size: 0.75rem; }
+    .toolbar { display: flex; gap: 0.5rem; margin-left: auto; flex-shrink: 0; align-items: center; }
+    .toolbar-toggle { background: transparent; border: none; color: var(--nc-text-faint); cursor: pointer; font-size: 1.25rem; line-height: 1; padding: 0.25rem 0.5rem; border-radius: 0.375rem; transition: color .2s, background .2s; }
+    .toolbar-toggle:hover { color: var(--nc-text-muted); background: rgba(30,41,59,0.5); }
+    .toolbar-actions { display: none; gap: 0.5rem; }
+    .toolbar.expanded .toolbar-actions { display: flex; }
+    .toolbar-actions button { background: rgba(30,41,59,0.8); border: 1px solid var(--nc-border-bright); color: var(--nc-text-muted); padding: 0.375rem 0.75rem; border-radius: 0.375rem; font-family: inherit; font-size: 0.75rem; cursor: pointer; transition: all .2s; white-space: nowrap; }
+    .toolbar-actions button:hover { background: rgba(51,65,85,0.8); color: white; border-color: #475569; }
+    @media print { body { background: #020617; padding: 1rem; } .toolbar, .zoom-bar { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="container" id="report-container">
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1>What this build refused to inherit</h1>
+        <div class="toolbar">
+          <div class="toolbar-actions">
+            <button onclick="copyAsImage(this)">📋 Copy</button>
+            <button onclick="downloadPNG(this)">🖼️ PNG</button>
+            <button onclick="downloadPDF(this)">📄 PDF</button>
+          </div>
+          <button class="toolbar-toggle" onclick="this.parentElement.classList.toggle('expanded')" title="Export options" aria-label="Export options">⋯</button>
+        </div>
+      </div>
+      <p class="subtitle">Sutra is an <em>extraction</em> from a live system, so by default it inherits every defect that system had — including the ones that had been shipping unnoticed for years. Each is closed by a <strong>named test that fails against a planted instance</strong>, because a guardrail test that has never been seen to fail is not evidence of anything.</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1180 700">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      <rect x="30" y="30" width="1120" height="500" rx="12" fill="#fb71850d" stroke="#fb7185" stroke-width="1" stroke-dasharray="8,4" opacity="0.6"/>
+      <text x="44" y="50" fill="#fb7185" font-size="10" font-weight="600" opacity="0.9">THE MANIFEST — a defect is closed when its test fails against a planted instance</text>
+      <rect x="60" y="75" width="335" height="88" rx="6" fill="#0f172a"/>
+      <rect x="60" y="75" width="335" height="88" rx="6" fill="rgba(136,19,55,0.28)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="74" y="96" fill="#fb7185" font-size="11" font-weight="700">D1</text>
+      <text x="106" y="96" fill="#e2e8f0" font-size="9.5">6,000-char input clip</text>
+      <line x1="74" y1="107" x2="381" y2="107" stroke="#fb7185" stroke-width="0.5" opacity="0.4"/>
+      <text x="74" y="125" fill="#34d399" font-size="9" font-weight="600">closed by:</text>
+      <text x="74" y="141" fill="#94a3b8" font-size="9">no clip; seen/total on every page</text>
+      <rect x="425" y="75" width="335" height="88" rx="6" fill="#0f172a"/>
+      <rect x="425" y="75" width="335" height="88" rx="6" fill="rgba(136,19,55,0.28)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="439" y="96" fill="#fb7185" font-size="11" font-weight="700">D4</text>
+      <text x="471" y="96" fill="#e2e8f0" font-size="9.5">path floor was dead code</text>
+      <line x1="439" y1="107" x2="746" y2="107" stroke="#fb7185" stroke-width="0.5" opacity="0.4"/>
+      <text x="439" y="125" fill="#34d399" font-size="9" font-weight="600">closed by:</text>
+      <text x="439" y="141" fill="#94a3b8" font-size="9">segment matching + a fixture per rule</text>
+      <rect x="790" y="75" width="335" height="88" rx="6" fill="#0f172a"/>
+      <rect x="790" y="75" width="335" height="88" rx="6" fill="rgba(136,19,55,0.28)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="804" y="96" fill="#fb7185" font-size="11" font-weight="700">D5</text>
+      <text x="836" y="96" fill="#e2e8f0" font-size="9.5">sk- could not match sk-ant-</text>
+      <line x1="804" y1="107" x2="1111" y2="107" stroke="#fb7185" stroke-width="0.5" opacity="0.4"/>
+      <text x="804" y="125" fill="#34d399" font-size="9" font-weight="600">closed by:</text>
+      <text x="804" y="141" fill="#94a3b8" font-size="9">20 rules, each with a must-match fixture</text>
+      <rect x="60" y="183" width="335" height="88" rx="6" fill="#0f172a"/>
+      <rect x="60" y="183" width="335" height="88" rx="6" fill="rgba(136,19,55,0.28)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="74" y="204" fill="#fb7185" font-size="11" font-weight="700">D9</text>
+      <text x="106" y="204" fill="#e2e8f0" font-size="9.5">no lock between jobs</text>
+      <line x1="74" y1="215" x2="381" y2="215" stroke="#fb7185" stroke-width="0.5" opacity="0.4"/>
+      <text x="74" y="233" fill="#34d399" font-size="9" font-weight="600">closed by:</text>
+      <text x="74" y="249" fill="#94a3b8" font-size="9">rank-ordered resource locks</text>
+      <rect x="425" y="183" width="335" height="88" rx="6" fill="#0f172a"/>
+      <rect x="425" y="183" width="335" height="88" rx="6" fill="rgba(136,19,55,0.28)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="439" y="204" fill="#fb7185" font-size="11" font-weight="700">D11</text>
+      <text x="471" y="204" fill="#e2e8f0" font-size="9.5">failures counted as skips</text>
+      <line x1="439" y1="215" x2="746" y2="215" stroke="#fb7185" stroke-width="0.5" opacity="0.4"/>
+      <text x="439" y="233" fill="#34d399" font-size="9" font-weight="600">closed by:</text>
+      <text x="439" y="249" fill="#94a3b8" font-size="9">five outcomes, never one counter</text>
+      <rect x="790" y="183" width="335" height="88" rx="6" fill="#0f172a"/>
+      <rect x="790" y="183" width="335" height="88" rx="6" fill="rgba(136,19,55,0.28)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="804" y="204" fill="#fb7185" font-size="11" font-weight="700">D13</text>
+      <text x="836" y="204" fill="#e2e8f0" font-size="9.5">header disagreed with body</text>
+      <line x1="804" y1="215" x2="1111" y2="215" stroke="#fb7185" stroke-width="0.5" opacity="0.4"/>
+      <text x="804" y="233" fill="#34d399" font-size="9" font-weight="600">closed by:</text>
+      <text x="804" y="249" fill="#94a3b8" font-size="9">counters computed at write time</text>
+      <rect x="60" y="291" width="335" height="88" rx="6" fill="#0f172a"/>
+      <rect x="60" y="291" width="335" height="88" rx="6" fill="rgba(136,19,55,0.28)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="74" y="312" fill="#fb7185" font-size="11" font-weight="700">D14</text>
+      <text x="106" y="312" fill="#e2e8f0" font-size="9.5">classify-once</text>
+      <line x1="74" y1="323" x2="381" y2="323" stroke="#fb7185" stroke-width="0.5" opacity="0.4"/>
+      <text x="74" y="341" fill="#34d399" font-size="9" font-weight="600">closed by:</text>
+      <text x="74" y="357" fill="#94a3b8" font-size="9">content-hashed set + sutra rescan</text>
+      <rect x="425" y="291" width="335" height="88" rx="6" fill="#0f172a"/>
+      <rect x="425" y="291" width="335" height="88" rx="6" fill="rgba(136,19,55,0.28)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="439" y="312" fill="#fb7185" font-size="11" font-weight="700">D15</text>
+      <text x="471" y="312" fill="#e2e8f0" font-size="9.5">guard defeated by own links</text>
+      <line x1="439" y1="323" x2="746" y2="323" stroke="#fb7185" stroke-width="0.5" opacity="0.4"/>
+      <text x="439" y="341" fill="#34d399" font-size="9" font-weight="600">closed by:</text>
+      <text x="439" y="357" fill="#94a3b8" font-size="9">prose-only measurement</text>
+      <rect x="790" y="291" width="335" height="88" rx="6" fill="#0f172a"/>
+      <rect x="790" y="291" width="335" height="88" rx="6" fill="rgba(136,19,55,0.28)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="804" y="312" fill="#fb7185" font-size="11" font-weight="700">D18</text>
+      <text x="836" y="312" fill="#e2e8f0" font-size="9.5">empty rebuild over a good graph</text>
+      <line x1="804" y1="323" x2="1111" y2="323" stroke="#fb7185" stroke-width="0.5" opacity="0.4"/>
+      <text x="804" y="341" fill="#34d399" font-size="9" font-weight="600">closed by:</text>
+      <text x="804" y="357" fill="#94a3b8" font-size="9">guard INSIDE the builder</text>
+      <rect x="60" y="399" width="335" height="88" rx="6" fill="#0f172a"/>
+      <rect x="60" y="399" width="335" height="88" rx="6" fill="rgba(136,19,55,0.28)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="74" y="420" fill="#fb7185" font-size="11" font-weight="700">D21</text>
+      <text x="106" y="420" fill="#e2e8f0" font-size="9.5">band measured 'an LLM ran'</text>
+      <line x1="74" y1="431" x2="381" y2="431" stroke="#fb7185" stroke-width="0.5" opacity="0.4"/>
+      <text x="74" y="449" fill="#34d399" font-size="9" font-weight="600">closed by:</text>
+      <text x="74" y="465" fill="#94a3b8" font-size="9">capture ratio</text>
+      <rect x="425" y="399" width="335" height="88" rx="6" fill="#0f172a"/>
+      <rect x="425" y="399" width="335" height="88" rx="6" fill="rgba(136,19,55,0.28)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="439" y="420" fill="#fb7185" font-size="11" font-weight="700">D24</text>
+      <text x="471" y="420" fill="#e2e8f0" font-size="9.5">fuzzy rule blocked commits</text>
+      <line x1="439" y1="431" x2="746" y2="431" stroke="#fb7185" stroke-width="0.5" opacity="0.4"/>
+      <text x="439" y="449" fill="#34d399" font-size="9" font-weight="600">closed by:</text>
+      <text x="439" y="465" fill="#94a3b8" font-size="9">banding: only definite blocks</text>
+      <rect x="790" y="399" width="335" height="88" rx="6" fill="#0f172a"/>
+      <rect x="790" y="399" width="335" height="88" rx="6" fill="rgba(136,19,55,0.28)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="804" y="420" fill="#fb7185" font-size="11" font-weight="700">D36</text>
+      <text x="836" y="420" fill="#e2e8f0" font-size="9.5">builder inputs gitignored</text>
+      <line x1="804" y1="431" x2="1111" y2="431" stroke="#fb7185" stroke-width="0.5" opacity="0.4"/>
+      <text x="804" y="449" fill="#34d399" font-size="9" font-weight="600">closed by:</text>
+      <text x="804" y="465" fill="#94a3b8" font-size="9">doctor asserts inputs are tracked</text>
+      <rect x="30" y="560" width="1120" height="80" rx="8" fill="#0f172a"/>
+      <rect x="30" y="560" width="1120" height="80" rx="8" fill="rgba(120,53,15,0.22)" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="590" y="584" fill="#fbbf24" font-size="10.5" font-weight="700" text-anchor="middle">THE RULE THAT PRODUCED ALL OF THESE</text>
+      <text x="590" y="605" fill="#e2e8f0" font-size="9.5" text-anchor="middle">Write the test before you believe the fix.</text>
+      <text x="590" y="622" fill="#94a3b8" font-size="9" text-anchor="middle">A fix landed once with its invariant written afterwards — and the test immediately FAILED, exposing three further instances the &ldquo;fix&rdquo; had left untouched.</text>
+      <text x="30" y="665" fill="#64748b" font-size="9" font-weight="600">LEGEND</text>
+      <rect x="30" y="675" width="11" height="11" rx="2" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="47" y="684" fill="#94a3b8" font-size="9">gate — it REFUSES</text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-header"><div class="card-dot rose"></div><h3>It happened again during this build</h3></div>
+        <ul><li>The positive-coverage test caught <strong>three detection rules</strong> whose fixtures were one character short of their own patterns.</li><li>Dead rules — and a rule that matches nothing looks <em>exactly</em> like a rule protecting a clean corpus.</li><li>Found before the first commit rather than after a year of shipping.</li></ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot amber"></div><h3>Two more, found by running it</h3></div>
+        <ul><li>The first cited answer on a fresh install quoted a <strong>template file</strong> full of <code>{{title}}</code> placeholders as a source.</li><li>The shipped note templates defaulted to <code>public</code> — a template that mints public notes contradicts the vault's own rule.</li><li>Neither would have been found by reading the code.</li></ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot slate"></div><h3>And one inside a check</h3></div>
+        <ul><li><code>check-core-alone</code> carried stale build state into its staged copy, so tsc emitted <strong>nothing</strong> and exited 0.</li><li>It reported a passing build with no compiled output — D18's exact shape, inside the script written to catch such things.</li><li>It now asserts the builder produced output rather than inferring it.</li></ul>
+      </div>
+    </div>
+
+    <p class="footer">Sutra · inherited defects · generated by scripts/diagrams.mjs · hand-laid inline SVG, no render step · renders offline</p>
+    <a class="gallery-link" href="index.html">← all diagrams</a>
+  </div>
+
+  <script src="assets/diagram.js"></script>
+  <script>
+    async function shot(){const el=document.getElementById('report-container');const r=el.getBoundingClientRect();const pad=32;return html2canvas(document.body,{backgroundColor:'#020617',scale:2,useCORS:true,ignoreElements:(e)=>e.classList&&(e.classList.contains('toolbar')||e.classList.contains('zoom-bar')),x:r.left+window.scrollX-pad,y:r.top+window.scrollY-pad,width:r.width+pad*2,height:r.height+pad*2});}
+    async function copyAsImage(btn){const o=btn.textContent;try{const c=await shot();const b=await new Promise(r=>c.toBlob(r,'image/png'));await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);btn.textContent='✓ Copied!';}catch(e){btn.textContent='✗ '+(e.message||'Failed').slice(0,20);}setTimeout(()=>btn.textContent=o,2200);}
+    async function downloadPNG(btn){const o=btn.textContent;btn.textContent='⏳ ...';try{const c=await shot();const a=document.createElement('a');a.download='inherited-defects.png';a.href=c.toDataURL('image/png');a.click();btn.textContent='✓ Done!';}catch(e){btn.textContent='✗ '+(e.message||'Failed').slice(0,20);}setTimeout(()=>btn.textContent=o,2200);}
+    async function downloadPDF(btn){const o=btn.textContent;btn.textContent='⏳ ...';try{const c=await shot();const {jsPDF}=window.jspdf;const or=c.width>c.height?'landscape':'portrait';const p=new jsPDF({orientation:or,unit:'px',format:[c.width,c.height],hotfixes:['px_scaling']});p.addImage(c.toDataURL('image/png'),'PNG',0,0,c.width,c.height);p.save('inherited-defects.pdf');btn.textContent='✓ Done!';}catch(e){btn.textContent='✗ '+(e.message||'Failed').slice(0,20);}setTimeout(()=>btn.textContent=o,2200);}
+  </script>
+</body>
+</html>

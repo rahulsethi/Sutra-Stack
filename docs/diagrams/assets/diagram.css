@@ -1,0 +1,38 @@
+/* SPDX-License-Identifier: Apache-2.0
+ * Shared chrome for every standalone diagram: pan/zoom controls, hover
+ * highlighting, the gallery link. Generic over the hand-laid SVG — there is no
+ * per-diagram CSS anywhere in this set.
+ */
+@import url("tokens.css");
+
+.zoom-bar {
+  display: flex; gap: .5rem; align-items: center;
+  margin: 0 0 .75rem; color: var(--nc-text-faint); font-size: .7rem;
+}
+.zoom-bar button {
+  background: rgba(30, 41, 59, .8); border: 1px solid var(--nc-border-bright);
+  color: var(--nc-text-muted); width: 28px; height: 28px; border-radius: .375rem;
+  font-family: inherit; cursor: pointer; transition: all .2s; line-height: 1;
+}
+.zoom-bar button:hover { background: rgba(51, 65, 85, .8); color: #fff; }
+.zoom-bar .hint { margin-left: auto; }
+
+.diagram-container { cursor: grab; }
+.diagram-container.dragging { cursor: grabbing; }
+.diagram-container svg { transform-origin: 0 0; transition: transform .06s linear; }
+
+/* Hover-glow, applied by diagram.js to any typed box. */
+.nc-box { transition: filter .18s ease, opacity .18s ease; }
+.diagram-container.has-hover .nc-box:not(.nc-hover) { opacity: .45; }
+.nc-box.nc-hover { filter: drop-shadow(0 0 6px currentColor) brightness(1.15); }
+
+.gallery-link {
+  display: inline-block; margin-top: 1.5rem; color: var(--nc-text-dim);
+  font-size: .75rem; text-decoration: none;
+}
+.gallery-link:hover { color: var(--nc-text-muted); text-decoration: underline; }
+
+/* The export toolbar depends on two CDN libraries. Offline they are absent, and
+ * the buttons must SAY so rather than reporting a mysterious failure.
+ * Degradation is allowed; silent degradation is not. */
+.toolbar-actions button.unavailable { opacity: .5; cursor: not-allowed; }

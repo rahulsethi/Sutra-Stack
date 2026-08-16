@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sutra — Architecture</title>
+  <link rel="stylesheet" href="assets/diagram.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--nc-font-mono); background: var(--nc-bg); min-height: 100vh; padding: 2rem; color: var(--nc-text); }
+    .container { max-width: 1280px; margin: 0 auto; }
+    .header { margin-bottom: 2rem; }
+    .header-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+    .pulse-dot { width: 12px; height: 12px; background: #34d399; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+    .subtitle { color: var(--nc-text-muted); font-size: 0.875rem; margin-left: 1.75rem; max-width: 92ch; line-height: 1.6; }
+    .diagram-container { background: var(--nc-surface); border-radius: var(--nc-radius-lg); border: 1px solid var(--nc-border); padding: 1.5rem; overflow: hidden; }
+    svg { width: 100%; display: block; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap: 1rem; margin-top: 2rem; }
+    .card { background: var(--nc-surface); border-radius: var(--nc-radius); border: 1px solid var(--nc-border); padding: 1.25rem; }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .card-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .card-dot.violet { background: #a78bfa; } .card-dot.cyan { background: #22d3ee; } .card-dot.emerald { background: #34d399; }
+    .card-dot.amber { background: #fbbf24; } .card-dot.rose { background: #fb7185; } .card-dot.slate { background: #94a3b8; }
+    .card h3 { font-size: 0.875rem; font-weight: 600; }
+    .card ul { list-style: none; color: var(--nc-text-muted); font-size: 0.75rem; line-height: 1.55; }
+    .card li { margin-bottom: 0.5rem; }
+    .footer { text-align: center; margin-top: 1.5rem; color: var(--nc-text-faint); font-size: 0.75rem; }
+    .toolbar { display: flex; gap: 0.5rem; margin-left: auto; flex-shrink: 0; align-items: center; }
+    .toolbar-toggle { background: transparent; border: none; color: var(--nc-text-faint); cursor: pointer; font-size: 1.25rem; line-height: 1; padding: 0.25rem 0.5rem; border-radius: 0.375rem; transition: color .2s, background .2s; }
+    .toolbar-toggle:hover { color: var(--nc-text-muted); background: rgba(30,41,59,0.5); }
+    .toolbar-actions { display: none; gap: 0.5rem; }
+    .toolbar.expanded .toolbar-actions { display: flex; }
+    .toolbar-actions button { background: rgba(30,41,59,0.8); border: 1px solid var(--nc-border-bright); color: var(--nc-text-muted); padding: 0.375rem 0.75rem; border-radius: 0.375rem; font-family: inherit; font-size: 0.75rem; cursor: pointer; transition: all .2s; white-space: nowrap; }
+    .toolbar-actions button:hover { background: rgba(51,65,85,0.8); color: white; border-color: #475569; }
+    @media print { body { background: #020617; padding: 1rem; } .toolbar, .zoom-bar { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="container" id="report-container">
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1>Architecture — and the licence boundary</h1>
+        <div class="toolbar">
+          <div class="toolbar-actions">
+            <button onclick="copyAsImage(this)">📋 Copy</button>
+            <button onclick="downloadPNG(this)">🖼️ PNG</button>
+            <button onclick="downloadPDF(this)">📄 PDF</button>
+          </div>
+          <button class="toolbar-toggle" onclick="this.parentElement.classList.toggle('expanded')" title="Export options" aria-label="Export options">⋯</button>
+        </div>
+      </div>
+      <p class="subtitle">Everything outside <code>ee/</code> is Apache-2.0. <code>ee/</code> is commercial. The dependency arrow points one way — <strong>Core never imports from ee/</strong> — and CI proves it on every commit by deleting the subtree and running the full suite.</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1180 690">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      <rect x="30" y="30" width="700" height="480" rx="12" fill="#34d3990d" stroke="#34d399" stroke-width="1" stroke-dasharray="8,4" opacity="0.6"/>
+      <text x="44" y="50" fill="#34d399" font-size="10" font-weight="600" opacity="0.9">CORE — Apache-2.0. `rm -rf ee/` leaves this complete and tested.</text>
+      <rect x="60" y="75" width="300" height="90" rx="6" fill="#0f172a"/>
+      <rect x="60" y="75" width="300" height="90" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="210" y="97" fill="white" font-size="11" font-weight="600" text-anchor="middle">packages/core</text>
+      <text x="210" y="113" fill="#94a3b8" font-size="9" text-anchor="middle">gate · vault · retrieval · run · audit</text>
+      <text x="210" y="126" fill="#94a3b8" font-size="9" text-anchor="middle">ONE runtime dependency (gray-matter)</text>
+      <rect x="390" y="75" width="310" height="90" rx="6" fill="#0f172a"/>
+      <rect x="390" y="75" width="310" height="90" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="545" y="97" fill="white" font-size="11" font-weight="600" text-anchor="middle">packages/mcp</text>
+      <text x="545" y="113" fill="#94a3b8" font-size="9" text-anchor="middle">stdio JSON-RPC · 14 tools</text>
+      <text x="545" y="126" fill="#94a3b8" font-size="9" text-anchor="middle">ZERO dependencies, by design</text>
+      <rect x="60" y="200" width="300" height="70" rx="6" fill="#0f172a"/>
+      <rect x="60" y="200" width="300" height="70" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="210" y="222" fill="white" font-size="11" font-weight="600" text-anchor="middle">packages/cli</text>
+      <text x="210" y="238" fill="#94a3b8" font-size="9" text-anchor="middle">--json everywhere</text>
+      <text x="210" y="251" fill="#94a3b8" font-size="9" text-anchor="middle">exit codes are governance signals</text>
+      <rect x="390" y="200" width="310" height="70" rx="6" fill="#0f172a"/>
+      <rect x="390" y="200" width="310" height="70" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="545" y="222" fill="white" font-size="11" font-weight="600" text-anchor="middle">packages/daemon + dashboard</text>
+      <text x="545" y="238" fill="#94a3b8" font-size="9" text-anchor="middle">OPTIONAL — shape (c) only</text>
+      <text x="545" y="251" fill="#94a3b8" font-size="9" text-anchor="middle">deleting them must break nothing</text>
+      <rect x="60" y="305" width="300" height="70" rx="6" fill="#0f172a"/>
+      <rect x="60" y="305" width="300" height="70" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="210" y="327" fill="white" font-size="11" font-weight="600" text-anchor="middle">automation/</text>
+      <text x="210" y="343" fill="#94a3b8" font-size="9" text-anchor="middle">pwsh 7 pipeline + optional Python</text>
+      <text x="210" y="356" fill="#94a3b8" font-size="9" text-anchor="middle">one shared rule set with the core</text>
+      <rect x="390" y="305" width="310" height="70" rx="6" fill="#0f172a"/>
+      <rect x="390" y="305" width="310" height="70" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="545" y="327" fill="white" font-size="11" font-weight="600" text-anchor="middle">vault-template/</text>
+      <text x="545" y="343" fill="#94a3b8" font-size="9" text-anchor="middle">the skeleton — ZERO notes</text>
+      <rect x="60" y="410" width="640" height="70" rx="6" fill="#0f172a"/>
+      <rect x="60" y="410" width="640" height="70" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="380" y="432" fill="white" font-size="11" font-weight="600" text-anchor="middle">plugins/  —  claude-code · hermes · codex</text>
+      <text x="380" y="448" fill="#94a3b8" font-size="9" text-anchor="middle">no absolute path travels; the ceiling is chosen per harness</text>
+      <rect x="770" y="30" width="380" height="300" rx="12" fill="#fb71850d" stroke="#fb7185" stroke-width="1" stroke-dasharray="8,4" opacity="0.6"/>
+      <text x="784" y="50" fill="#fb7185" font-size="10" font-weight="600" opacity="0.9">ee/ — COMMERCIAL. Apache-2.0 does NOT apply.</text>
+      <rect x="800" y="75" width="320" height="60" rx="6" fill="#0f172a"/>
+      <rect x="800" y="75" width="320" height="60" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="960" y="97" fill="white" font-size="11" font-weight="600" text-anchor="middle">policy/engine + bundle</text>
+      <text x="960" y="113" fill="#94a3b8" font-size="9" text-anchor="middle">E1 · E2 · E5</text>
+      <rect x="800" y="155" width="320" height="60" rx="6" fill="#0f172a"/>
+      <rect x="800" y="155" width="320" height="60" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="960" y="177" fill="white" font-size="11" font-weight="600" text-anchor="middle">audit/chain · keys/kms</text>
+      <text x="960" y="193" fill="#94a3b8" font-size="9" text-anchor="middle">E3 · E4</text>
+      <rect x="800" y="235" width="320" height="60" rx="6" fill="#0f172a"/>
+      <rect x="800" y="235" width="320" height="60" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="960" y="257" fill="white" font-size="11" font-weight="600" text-anchor="middle">classifier/external · supply/sbom</text>
+      <text x="960" y="273" fill="#94a3b8" font-size="9" text-anchor="middle">E7 · E6</text>
+      <line x1="800" y1="180" x2="710" y2="130" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowhead)" opacity="0.85"/>
+      <rect x="724" y="140" width="62" height="14" rx="3" fill="#020617" opacity="0.9"/>
+      <text x="755" y="150" fill="#fb7185" font-size="8.5" text-anchor="middle">ee → core</text>
+      <rect x="770" y="350" width="380" height="90" rx="8" fill="#0f172a"/>
+      <rect x="770" y="350" width="380" height="90" rx="8" fill="rgba(136,19,55,0.25)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="960" y="375" fill="#fb7185" font-size="11" font-weight="700" text-anchor="middle">ee/ CAN ONLY NARROW</text>
+      <text x="960" y="395" fill="#e2e8f0" font-size="9.5" text-anchor="middle">tier ≤ min(clearance, surface, purpose)</text>
+      <text x="960" y="412" fill="#94a3b8" font-size="9" text-anchor="middle">Asserted over all 162 combinations, every build.</text>
+      <text x="960" y="428" fill="#94a3b8" font-size="9" text-anchor="middle">A security review reduces to reading Core's gate.</text>
+      <rect x="770" y="460" width="380" height="50" rx="8" fill="#0f172a"/>
+      <rect x="770" y="460" width="380" height="50" rx="8" fill="rgba(6,78,59,0.25)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="960" y="482" fill="#34d399" font-size="10" font-weight="700" text-anchor="middle">CI, every commit:</text>
+      <text x="960" y="499" fill="#e2e8f0" font-size="9.5" text-anchor="middle">rm -rf ee/ &amp;&amp; build &amp;&amp; full test suite</text>
+      <text x="380" y="545" fill="#64748b" font-size="9" font-weight="600" text-anchor="middle">THE VAULT IS NOT IN THIS REPO</text>
+      <text x="380" y="562" fill="#94a3b8" font-size="9" text-anchor="middle">A user's vault is a separate, user-owned git repo the CLI points at by path.</text>
+      <text x="380" y="577" fill="#94a3b8" font-size="9" text-anchor="middle">Deliberately NOT a submodule: a reconcile on a node that runs its own pipeline is a data-loss trap.</text>
+      <text x="30" y="610" fill="#64748b" font-size="9" font-weight="600">LEGEND</text>
+      <rect x="30" y="620" width="11" height="11" rx="2" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="47" y="629" fill="#94a3b8" font-size="9">serve — it answers a question</text>
+      <rect x="210.60000000000002" y="620" width="11" height="11" rx="2" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="227.60000000000002" y="629" fill="#94a3b8" font-size="9">ops — it runs on a schedule</text>
+      <rect x="380.40000000000003" y="620" width="11" height="11" rx="2" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="397.40000000000003" y="629" fill="#94a3b8" font-size="9">authored — a person wrote it</text>
+      <rect x="555.6" y="620" width="11" height="11" rx="2" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="572.6" y="629" fill="#94a3b8" font-size="9">gate — it REFUSES</text>
+      <rect x="671.4000000000001" y="620" width="11" height="11" rx="2" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="688.4000000000001" y="629" fill="#94a3b8" font-size="9">external — we do not own it</text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-header"><div class="card-dot emerald"></div><h3>One dependency</h3></div>
+        <ul><li><code>@sutra/core</code>: one (<code>gray-matter</code>, MIT). <code>@sutra/mcp</code>: zero.</li><li>That is the auditability claim expressed as a number — <strong>the thing deciding what your AI can see is readable in an afternoon</strong>.</li><li><code>ee/src/supply/sbom.ts</code> enforces the ceiling, so raising it is a decision rather than an accident.</li></ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot rose"></div><h3>Why the boundary is mechanical</h3></div>
+        <ul><li>&ldquo;Core depends on <code>ee/</code>&rdquo; discovered at release is expensive; discovered on the commit that introduces it, it is free.</li><li>The check stages a copy, deletes <code>ee/</code>, installs, builds, tests — <em>and asserts the build emitted output</em>, because a build that produces nothing and exits 0 looks exactly like one that worked.</li></ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot slate"></div><h3>Shape (c) is genuinely optional</h3></div>
+        <ul><li>The daemon and dashboard are <strong>separate packages</strong>, not a flag.</li><li>A flag would let the dependency creep back one import at a time, until &ldquo;optional&rdquo; was true only in the documentation.</li></ul>
+      </div>
+    </div>
+
+    <p class="footer">Sutra · architecture · generated by scripts/diagrams.mjs · hand-laid inline SVG, no render step · renders offline</p>
+    <a class="gallery-link" href="index.html">← all diagrams</a>
+  </div>
+
+  <script src="assets/diagram.js"></script>
+  <script>
+    async function shot(){const el=document.getElementById('report-container');const r=el.getBoundingClientRect();const pad=32;return html2canvas(document.body,{backgroundColor:'#020617',scale:2,useCORS:true,ignoreElements:(e)=>e.classList&&(e.classList.contains('toolbar')||e.classList.contains('zoom-bar')),x:r.left+window.scrollX-pad,y:r.top+window.scrollY-pad,width:r.width+pad*2,height:r.height+pad*2});}
+    async function copyAsImage(btn){const o=btn.textContent;try{const c=await shot();const b=await new Promise(r=>c.toBlob(r,'image/png'));await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);btn.textContent='✓ Copied!';}catch(e){btn.textContent='✗ '+(e.message||'Failed').slice(0,20);}setTimeout(()=>btn.textContent=o,2200);}
+    async function downloadPNG(btn){const o=btn.textContent;btn.textContent='⏳ ...';try{const c=await shot();const a=document.createElement('a');a.download='architecture.png';a.href=c.toDataURL('image/png');a.click();btn.textContent='✓ Done!';}catch(e){btn.textContent='✗ '+(e.message||'Failed').slice(0,20);}setTimeout(()=>btn.textContent=o,2200);}
+    async function downloadPDF(btn){const o=btn.textContent;btn.textContent='⏳ ...';try{const c=await shot();const {jsPDF}=window.jspdf;const or=c.width>c.height?'landscape':'portrait';const p=new jsPDF({orientation:or,unit:'px',format:[c.width,c.height],hotfixes:['px_scaling']});p.addImage(c.toDataURL('image/png'),'PNG',0,0,c.width,c.height);p.save('architecture.pdf');btn.textContent='✓ Done!';}catch(e){btn.textContent='✗ '+(e.message||'Failed').slice(0,20);}setTimeout(()=>btn.textContent=o,2200);}
+  </script>
+</body>
+</html>

@@ -28,13 +28,15 @@
     "check:no-bun": "node scripts/check-no-bun.mjs",
     "leak-scan": "node scripts/leak-scan.mjs",
     "third-party": "node scripts/gen-third-party-notices.mjs",
-    "verify": "npm run build && npm test && npm run check:license && npm run check:no-bun && npm run leak-scan && npm run build:ee && npm run test:ee && npm run check:core-alone",
+    "verify": "npm run build && npm test && npm run check:license && npm run check:no-bun && npm run leak-scan && npm run check:diagrams && npm run build:ee && npm run test:ee && npm run check:core-alone",
     "sutra": "node packages/cli/dist/bin.js",
     "build:ee": "node scripts/if-ee.mjs tsc --build ee",
     "test:ee": "node scripts/if-ee.mjs node --test ee/dist",
     "build:all": "npm run build && npm run build:ee",
     "test:all": "npm test && npm run test:ee",
-    "sbom": "node scripts/gen-sbom.mjs"
+    "sbom": "node scripts/gen-sbom.mjs",
+    "diagrams": "node scripts/diagrams.mjs",
+    "check:diagrams": "node scripts/check-diagrams.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.19.9",

@@ -83,3 +83,4 @@ coverage/
 # automation/**                the pipeline ships
 # tests/fixtures/**            fixtures are inputs to guards; they must travel
 # **/graph/batches/**          D36 — builder input, primary data, must be tracked
+.gstack/

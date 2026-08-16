@@ -1,0 +1,57 @@
+/* SPDX-License-Identifier: Apache-2.0
+ *
+ * NOCTURNE — the Sutra design tokens.
+ *
+ * One contract, shared by every diagram and every rich page. The semantic
+ * colour palette IS the legend: a box's type is readable from its colour
+ * without consulting a key.
+ *
+ * FONT POLICY — a deliberate deviation from the shared skill template.
+ * That template loads JetBrains Mono from a CDN. Sutra's release gate requires
+ * that "an offline install renders correctly", and a documentation set that
+ * phones home in order to render is one that stops working in exactly the
+ * air-gapped environment it was chosen for. So: a local-first stack that uses
+ * the vendored face when present and degrades to the platform's own monospace
+ * otherwise.
+ */
+
+:root {
+  /* Canvas */
+  --nc-bg:            #020617;
+  --nc-surface:       rgba(15, 23, 42, 0.5);
+  --nc-surface-solid: #0f172a;
+  --nc-border:        #1e293b;
+  --nc-border-bright: #334155;
+
+  /* Text */
+  --nc-text:          #ffffff;
+  --nc-text-muted:    #94a3b8;
+  --nc-text-dim:      #64748b;
+  --nc-text-faint:    #475569;
+
+  /* ── The semantic type palette. Fill translucent, stroke bright. ──────────
+   *   authored  content a PERSON wrote          violet
+   *   derived   what the pipeline produced      cyan
+   *   serve     what answers a question         emerald
+   *   ops       what runs on a schedule         amber
+   *   gate      what REFUSES                    rose
+   *   external  what we do not own              slate
+   */
+  --nc-authored-fill:   rgba(76, 29, 149, 0.4);
+  --nc-authored-stroke: #a78bfa;
+  --nc-derived-fill:    rgba(8, 51, 68, 0.4);
+  --nc-derived-stroke:  #22d3ee;
+  --nc-serve-fill:      rgba(6, 78, 59, 0.4);
+  --nc-serve-stroke:    #34d399;
+  --nc-ops-fill:        rgba(120, 53, 15, 0.3);
+  --nc-ops-stroke:      #fbbf24;
+  --nc-gate-fill:       rgba(136, 19, 55, 0.4);
+  --nc-gate-stroke:     #fb7185;
+  --nc-external-fill:   rgba(30, 41, 59, 0.5);
+  --nc-external-stroke: #94a3b8;
+
+  --nc-radius:    0.75rem;
+  --nc-radius-lg: 1rem;
+  --nc-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Mono",
+                  "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}

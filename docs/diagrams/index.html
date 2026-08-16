@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sutra — Diagrams</title>
+  <link rel="stylesheet" href="assets/tokens.css">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: var(--nc-font-mono); background: var(--nc-bg); color: var(--nc-text); padding: 3rem 2rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .head { display:flex; align-items:center; gap:1rem; margin-bottom:.75rem; }
+    .pulse-dot { width:12px; height:12px; background:#a78bfa; border-radius:50%; animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    h1 { font-size:1.6rem; letter-spacing:-.025em; }
+    .lede { color: var(--nc-text-muted); font-size:.875rem; margin: 0 0 2.5rem 1.75rem; max-width:80ch; line-height:1.7; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:1rem; }
+    a.tile { display:block; text-decoration:none; background:var(--nc-surface); border:1px solid var(--nc-border);
+             border-radius:var(--nc-radius); padding:1.25rem; transition:all .2s; }
+    a.tile:hover { border-color:var(--nc-border-bright); transform:translateY(-2px); }
+    .tile h2 { font-size:.9rem; color:var(--nc-text); margin-bottom:.4rem; display:flex; align-items:center; gap:.5rem; }
+    .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .tile p { font-size:.75rem; color:var(--nc-text-muted); line-height:1.6; }
+    .note { margin-top:2.5rem; padding:1.25rem; border:1px solid var(--nc-border); border-radius:var(--nc-radius);
+            background:var(--nc-surface); color:var(--nc-text-muted); font-size:.75rem; line-height:1.7; }
+    .note strong { color:var(--nc-text); }
+    code { color:#a78bfa; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="head"><div class="pulse-dot"></div><h1>Sutra — Diagrams</h1></div>
+    <p class="lede">Hand-laid inline SVG in self-contained dark HTML. No Mermaid and no client-side layout step,
+      so a diagram cannot degrade to a white page or to haphazard routing. Every one renders offline; drag to pan,
+      wheel to zoom, hover a box to isolate it.</p>
+    <div class="grid">
+      <a class="tile" href="gate.html">
+        <h2><span class="dot" style="background:#fb7185"></span>The Gate — four independent enforcement points</h2>
+        <p>Every read path in the product passes all four. They are deliberately redundant: each one has failed independently in the system Sutra was extracted from, and the other three held. The ceiling is read from the environment at server startup and is never accepted as a tool argument — a model can ask for anything, and cannot change what it is allowed to see.</p>
+      </a>
+      <a class="tile" href="pipeline.html">
+        <h2><span class="dot" style="background:#fbbf24"></span>The pipeline — ingest → compile → graph → index</h2>
+        <p>Four stages, each a script that runs alone, orchestrated by daily.ps1. Every stage reports one of five distinct outcomes and holds the resource locks it writes. Degradation is allowed; silent degradation is not.</p>
+      </a>
+      <a class="tile" href="architecture.html">
+        <h2><span class="dot" style="background:#34d399"></span>Architecture — and the licence boundary</h2>
+        <p>Everything outside ee/ is Apache-2.0. ee/ is commercial. The dependency arrow points one way — Core never imports from ee/ — and CI proves it on every commit by deleting the subtree and running the full suite.</p>
+      </a>
+      <a class="tile" href="shapes.html">
+        <h2><span class="dot" style="background:#94a3b8"></span>Three shapes — the user chooses one</h2>
+        <p>Each shape is a complete product. (a) needs no account, no key and no network. Each later shape adds a surface without changing the gate: the ceiling differs, the enforcement does not.</p>
+      </a>
+      <a class="tile" href="mcp-surface.html">
+        <h2><span class="dot" style="background:#34d399"></span>The MCP surface — 13 reads, 1 write</h2>
+        <p>Hand-rolled JSON-RPC 2.0 over stdio, zero external dependencies, so a user auditing the thing that decides what their AI can see reads ~700 lines and nothing else. No tool accepts a ceiling, tier, scope, override or passphrase — a test walks every published schema on every build.</p>
+      </a>
+      <a class="tile" href="inherited-defects.html">
+        <h2><span class="dot" style="background:#fb7185"></span>What this build refused to inherit</h2>
+        <p>Sutra is an extraction from a live system, so by default it inherits every defect that system had — including the ones that had been shipping unnoticed for years. Each is closed by a named test that fails against a planted instance, because a guardrail test that has never been seen to fail is not evidence of anything.</p>
+      </a>
+    </div>
+    <div class="note">
+      <strong>Regenerate:</strong> <code>node scripts/diagrams.mjs</code>. The layouts are hand-placed coordinates —
+      the part that needs judgement — while the shell, palette and legend are generated, so the set cannot drift apart
+      visually. A structural change is not done until its diagram follows.
+      <br><br>
+      <strong>Offline:</strong> the diagrams render with no network. Only PNG/PDF export needs a CDN, and the buttons
+      say so rather than failing mysteriously.
+    </div>
+  </div>
+</body>
+</html>
