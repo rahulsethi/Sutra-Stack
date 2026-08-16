@@ -43,6 +43,19 @@ function findRepoRoot(): string {
 
 const ROOT = findRepoRoot();
 
+/**
+ * Is the commercial subtree present?
+ *
+ * IT MAY NOT BE, and that is a supported configuration — `rm -rf ee/` leaves a
+ * complete Apache-2.0 product, and `check-core-alone` proves it on every commit
+ * by deleting the subtree and running THIS SUITE.
+ *
+ * So no test here may assume `ee/` exists. The first version of this file did,
+ * and the M0 gate caught it immediately: a test that fails in the open-source
+ * build is a test that makes the open-source build look broken.
+ */
+const HAS_EE = existsSync(join(ROOT, "ee"));
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1 · Every source directory the build compiles has something in it
 // ─────────────────────────────────────────────────────────────────────────────
@@ -126,6 +139,7 @@ test("§9.1 · every file a remedy message tells you to edit exists", () => {
     for (const m of text.matchAll(/\b((?:tests|scripts|packages|ee)\/[\w./-]+\.(?:ts|mjs|js|json|ps1|md))\b/g)) {
       const p = m[1]!;
       if (p.includes("*")) continue;
+      if (!HAS_EE && p.startsWith("ee/")) continue;   // the Apache-only build
       if (!existsSync(join(ROOT, p)) && !missing.includes(`${rel} → ${p}`)) {
         missing.push(`${rel} → ${p}`);
       }
@@ -158,6 +172,9 @@ test("§9.1 · every directory CLAUDE.md's repo map claims exists, exists", () =
 
   for (const m of block.matchAll(/^([a-z][\w./-]*\/)\s{2,}/gm)) {
     const p = m[1]!;
+    // `ee/` is legitimately absent in the Apache-only build. The map documents
+    // it because it exists in the full distribution.
+    if (!HAS_EE && p.startsWith("ee/")) continue;
     const abs = join(ROOT, p);
     if (!existsSync(abs) || !statSync(abs).isDirectory()) missing.push(p);
   }
@@ -189,6 +206,7 @@ test("M8 · every relative link in a shipped doc resolves", () => {
   const broken: string[] = [];
 
   for (const doc of docs) {
+    if (!HAS_EE && doc.startsWith("ee/")) continue;   // the Apache-only build
     const abs = join(ROOT, doc);
     if (!existsSync(abs)) { broken.push(`${doc} — the doc itself is missing`); continue; }
     const text = readFileSync(abs, "utf8");
@@ -198,6 +216,10 @@ test("M8 · every relative link in a shipped doc resolves", () => {
       if (/^(https?:|mailto:|#)/.test(target)) continue;      // external or anchor
       const clean = target.split("#")[0]!;                     // drop any anchor
       if (clean === "") continue;
+      // A link INTO `ee/` is correct in the full distribution and dangling in
+      // the Apache-only build. The docs describe both, so the link stays and
+      // this check skips it when the subtree is absent.
+      if (!HAS_EE && clean.replace(/^\.\//, "").startsWith("ee/")) continue;
       const resolved = join(dirname(abs), clean);
       if (!existsSync(resolved)) broken.push(`${doc} → ${target}`);
     }

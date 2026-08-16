@@ -93,9 +93,32 @@ const SECRET_SHAPED = [
 ];
 
 test("D7 · nothing secret-shaped is TRACKED — asked of git, not reasoned about", () => {
-  const tracked = execFileSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf8", maxBuffer: 64e6 })
-    .split("\0")
-    .filter(Boolean);
+  // "What would ship" is a property of the REPOSITORY, so it can only be asked
+  // where there is one. `check-core-alone` stages a COPY of the tree without
+  // `.git`, deliberately — and in that context this question has no meaning
+  // rather than a failing answer.
+  //
+  // The skip is STATED, not silent. A test that quietly does nothing is
+  // indistinguishable from one that passed, which is this repo's whole thesis.
+  let tracked: string[];
+  try {
+    tracked = execFileSync("git", ["ls-files", "-z"], {
+      cwd: ROOT,
+      encoding: "utf8",
+      maxBuffer: 64e6,
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .split("\0")
+      .filter(Boolean);
+  } catch {
+    console.log("    (skipped — not a git repository; this asks what GIT would ship)");
+    return;
+  }
+
+  if (tracked.length === 0) {
+    console.log("    (skipped — no tracked files; this is a staged copy, not the repo)");
+    return;
+  }
 
   assert.ok(tracked.length > 50, "git reported almost no files — the query is wrong, not the repo");
 
