@@ -1,0 +1,10 @@
+{
+  "$comment": "SPDX-License-Identifier: Apache-2.0",
+  "name": "sutra",
+  "version": "1.0.0",
+  "description": "A governed knowledge substrate. Your notes stay plain markdown in a git repo you own; a gate sits between them and every model, and the model cannot lift it.",
+  "author": { "name": "Sutra" },
+  "homepage": "https://github.com/rahulsethi/Sutra-Stack",
+  "license": "Apache-2.0",
+  "keywords": ["knowledge", "memory", "governance", "privacy", "mcp"]
+}

@@ -1,0 +1,41 @@
+{
+  "$comment": [
+    "SPDX-License-Identifier: Apache-2.0",
+    "",
+    "The MCP registration Claude Code installs.",
+    "",
+    "${CLAUDE_PLUGIN_ROOT} is substituted by the harness, so this file carries NO",
+    "absolute path from anyone's machine. That is S9.6: a config synced between",
+    "nodes once put a Windows interpreter path into a Linux config, and it only",
+    "surfaced on restart.",
+    "",
+    "SUTRA_MCP_EXPOSURE is the CEILING, and it is the only thing here a user",
+    "should think hard about. It is read by the server AT STARTUP and can never",
+    "be changed by a tool call — that is invariant 2, and it is why registering",
+    "at `public` is a decision you make once rather than one the model can",
+    "renegotiate.",
+    "",
+    "  public   the assistant sees only notes you marked public. The default,",
+    "           and the right choice for any harness that relays to a cloud model.",
+    "  private  it also sees your private notes. Only if you accept that a cloud",
+    "           provider processes them.",
+    "  secret   everything except do_not_learn. Only defensible when the model",
+    "           runs entirely on this machine.",
+    "",
+    "SUTRA_MCP_ALLOW_WRITE is absent by default, and the server fails closed",
+    "without it. Add it only if you want the assistant able to save things into",
+    "your inbox — captures are floored to `private` and can never be public."
+  ],
+  "mcpServers": {
+    "sutra": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/../../packages/mcp/dist/bin.js"],
+      "env": {
+        "SUTRA_MCP_EXPOSURE": "${user_config.exposure:-public}",
+        "SUTRA_MCP_SURFACE": "claude-code",
+        "SUTRA_VAULT": "${user_config.vault_path}",
+        "SUTRA_HOME": "${CLAUDE_PLUGIN_ROOT}/../.."
+      }
+    }
+  }
+}

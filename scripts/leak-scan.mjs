@@ -133,30 +133,35 @@ stats.rules = secretRules.length;
 const CLASS_RULES = [
   {
     id: "windows-user-path",
+    aboutFileIdentity: true,
     severity: "error",
     re: /[A-Za-z]:[\\/]Users[\\/](?!<|\$|USERNAME|%|\{)[A-Za-z0-9._-]+/g,
     why: "an absolute path naming a real user account on a real machine",
   },
   {
     id: "unix-home-path",
+    aboutFileIdentity: true,
     severity: "error",
     re: /\/(?:home|Users)\/(?!<|\$|\{)[a-z][a-z0-9._-]{2,}\//g,
     why: "an absolute home path naming a real account",
   },
   {
     id: "root-path",
+    aboutFileIdentity: true,
     severity: "warn",
     re: /(?:^|[\s"'=(])\/root\/[A-Za-z0-9._/-]+/g,
     why: "a VPS-specific root path — one deployment's topology",
   },
   {
     id: "tailnet-ip",
+    aboutFileIdentity: true,
     severity: "error",
     re: /\b100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d{1,3}\.\d{1,3}\b/g,
     why: "a CGNAT/tailnet address — a specific private network node",
   },
   {
     id: "public-ip-literal",
+    aboutFileIdentity: true,
     severity: "warn",
     re: /(?<![\w.])(?!0\.|10\.|127\.|169\.254\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.|22[4-9]\.|2[3-5]\d\.)(?:\d{1,3}\.){3}\d{1,3}(?![\w.])/g,
     why: "a literal public IP address — almost always someone's server",
@@ -299,11 +304,46 @@ function* walk(dir) {
   }
 }
 
+/**
+ * SOURCE CODE IS NOT VAULT CONTENT, and the distinction decides which rules apply.
+ *
+ * Two kinds of rule live in this scan, and conflating them produces exactly the
+ * false positives that get a scanner disabled:
+ *
+ *   WHAT A FILE CONTAINS — a matched key prefix, a PEM block, a JWT.
+ *     Applies EVERYWHERE, including source. A real key in a .ts file is a real
+ *     key, and nothing about being source code makes it less so.
+ *
+ *   WHAT A FILE *IS* — a path under `keys/`, a literal host address, a home
+ *     directory. These describe VAULT CONTENT and DEPLOYMENT ARTIFACTS. In
+ *     source code the same strings are directory names, constants, parsers and
+ *     test fixtures.
+ *
+ * Two real findings prompted this, and both were the scan being wrong:
+ *
+ *   - `ee/src/keys/kms.ts` matched the `keys/` secret-floor path. It is a source
+ *     directory named for the KMS integration, not a key store.
+ *   - `packages/daemon/src/bind.test.ts` matched the tailnet rule on
+ *     `100.64.0.1` — the first address of RFC 6598's reserved CGNAT range, used
+ *     as a fixture to assert that a tailnet address is NOT treated as loopback.
+ *     Removing it would delete the test's point.
+ *
+ * Suppressing either individually would have been a suppression. This is a rule:
+ * D24's banding logic one level up. A guard that is wrong in a predictable way
+ * gets routed around, and then it protects nothing.
+ */
+const SOURCE_EXT = /\.(ts|mts|cts|tsx|js|mjs|cjs|jsx|ps1|psm1|psd1|py|sh|go|rs|java|rb)$/i;
+
 function scanFile(abs) {
   const rel = relative(ROOT, abs).split(sep).join("/");
+  const isSource = SOURCE_EXT.test(abs);
 
-  for (const { glob, why } of FORBIDDEN_PATHS) {
-    if (glob.test(rel)) report("error", "forbidden-path", rel, why);
+  // A path rule describes what a file IS. In a source tree it describes a
+  // directory name, so it does not apply.
+  if (!isSource) {
+    for (const { glob, why } of FORBIDDEN_PATHS) {
+      if (glob.test(rel)) report("error", "forbidden-path", rel, why);
+    }
   }
 
   if (BINARY_EXT.test(abs)) return;
@@ -335,6 +375,12 @@ function scanFile(abs) {
   }
 
   for (const rule of CLASS_RULES) {
+    // A path- or address-shaped rule describes what a file IS. In source code
+    // the same strings are constants, parsers and test fixtures — see the note
+    // on SOURCE_EXT above. Identity-leak rules (an email, claude-brain, a legacy
+    // identifier) still apply everywhere, because those are always leaks.
+    if (isSource && rule.aboutFileIdentity) continue;
+
     rule.re.lastIndex = 0;
     let m;
     while ((m = rule.re.exec(text)) !== null) {

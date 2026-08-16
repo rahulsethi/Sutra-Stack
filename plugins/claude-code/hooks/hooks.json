@@ -1,0 +1,25 @@
+{
+  "$comment": [
+    "SPDX-License-Identifier: Apache-2.0",
+    "",
+    "Every command is expressed through the `sutra` CLI rather than through a",
+    "shell script with an absolute path. S9.6 and D6 both apply: the upstream",
+    "hooks were absolute Windows paths in a tracked config, which meant they were",
+    "wrong on every other machine and silently did nothing."
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sutra gate --json",
+            "timeout": 15,
+            "$comment": "Print the ceiling at session start so the operator knows what the assistant can see BEFORE they ask it anything."
+          }
+        ]
+      }
+    ]
+  }
+}

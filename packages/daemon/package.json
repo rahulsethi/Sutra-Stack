@@ -1,0 +1,14 @@
+{
+  "name": "@sutra/daemon",
+  "version": "1.0.0",
+  "description": "OPTIONAL. A loopback HTTP surface over the same gate. Shape (c) only — uninstalling it breaks nothing.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": { "sutra-daemon": "./dist/bin.js" },
+  "files": ["dist", "README.md"],
+  "engines": { "node": ">=20" },
+  "dependencies": { "@sutra/core": "1.0.0" },
+  "scripts": { "build": "tsc --build", "test": "node --test dist" }
+}

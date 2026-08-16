@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Add this to ~/.codex/config.toml.
+#
+# Replace <SUTRA_HOME> with the Sutra install directory and <VAULT> with your
+# vault. `sutra wire codex` prints this block with both already filled in for
+# THIS machine — which is the point: a config carrying another machine's paths
+# resolves to nothing, silently, until something restarts (S9.6).
+
+[mcp_servers.sutra]
+command = "node"
+args = ["<SUTRA_HOME>/packages/mcp/dist/bin.js"]
+
+[mcp_servers.sutra.env]
+# The CEILING. Read at startup; no tool call can change it.
+#   public   only notes you marked public — the right default for a cloud model
+#   private  also your private notes
+#   secret   everything except do_not_learn — only if the model runs locally
+SUTRA_MCP_EXPOSURE = "public"
+SUTRA_MCP_SURFACE  = "codex"
+SUTRA_VAULT        = "<VAULT>"
+SUTRA_HOME         = "<SUTRA_HOME>"
+
+# Uncomment to let the assistant save captures to your inbox. Off by default;
+# the server fails closed without it. Captures are floored to `private`.
+# SUTRA_MCP_ALLOW_WRITE = "1"

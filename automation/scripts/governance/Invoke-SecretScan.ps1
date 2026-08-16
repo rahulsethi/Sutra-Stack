@@ -135,10 +135,19 @@ foreach ($f in $files) {
   $text = [Text.Encoding]::UTF8.GetString($bytes)
   $scanned++
 
-  # A path floor is a `definite` signal on its own - see D4.
-  $floor = Test-FloorPath -RelPath $f -FloorPaths $patterns.FloorPaths
-  if ($floor) {
-    [void]$blocking.Add(@{ File = $f; Rule = "path-floor:$floor"; Line = 0; Detail = "sits under the secret-floor location '$floor'" })
+  # A path floor is a `definite` signal on its own (D4) - but it describes where
+  # NOTES live in a vault, not what a source directory may be named.
+  #
+  # `ee/src/keys/kms.ts` is a source directory named for the KMS integration,
+  # not a key store, and blocking commits on it is exactly the predictable false
+  # positive that earns a `--no-verify` habit. Content rules - a matched key
+  # prefix, a PEM block - still apply to source, because a real key in a .ts
+  # file is still a real key.
+  if (-not ($f -match '\.(ts|mts|cts|tsx|js|mjs|cjs|jsx|ps1|psm1|psd1|py|sh|go|rs|java|rb)$')) {
+    $floor = Test-FloorPath -RelPath $f -FloorPaths $patterns.FloorPaths
+    if ($floor) {
+      [void]$blocking.Add(@{ File = $f; Rule = "path-floor:$floor"; Line = 0; Detail = "sits under the secret-floor location '$floor'" })
+    }
   }
 
   foreach ($rule in $compiled) {
