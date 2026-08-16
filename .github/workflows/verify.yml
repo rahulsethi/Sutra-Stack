@@ -1,0 +1,177 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# THE RELEASE GATES, run on every commit.
+#
+# Each job below corresponds to a named gate in the build brief, and each exists
+# because the thing it checks FAILED SILENTLY in the system Sutra was extracted
+# from. None of them is a formality.
+
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # ══════════════════════════════════════════════════════════════════════════
+  # The suite, on every OS Sutra claims to support.
+  #
+  # M1's verify is explicit that it must be green on Linux AND Windows. Windows
+  # is where a backslash is a path separator and Linux is where it is a legal
+  # FILENAME CHARACTER (D26) — a bug that is invisible on one and silent on the
+  # other. macOS catches the case-insensitive-filesystem class.
+  # ══════════════════════════════════════════════════════════════════════════
+  suite:
+    name: tests · ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+
+      # D18, learned the hard way inside this repo's own check: a build that
+      # emits nothing and exits 0 is indistinguishable from one that worked.
+      - name: assert the build actually emitted something
+        shell: bash
+        run: |
+          for p in core mcp cli; do
+            if [ ! -d "packages/$p/dist" ] || [ -z "$(ls -A "packages/$p/dist")" ]; then
+              echo "::error::packages/$p/dist is empty — the build reported success and produced nothing"
+              exit 1
+            fi
+          done
+
+      - run: npm test
+
+      # PowerShell 7 is preinstalled on every GitHub runner as `pwsh`.
+      - name: PowerShell suite (incl. the PS/TS classifier parity)
+        shell: pwsh
+        run: |
+          $fail = 0
+          foreach ($t in @(
+            'automation/scripts/lib/Classify.test.ps1',
+            'automation/scripts/lib/Frontmatter.test.ps1'
+          )) {
+            Write-Host "== $t =="
+            pwsh -NoProfile -File $t
+            if ($LASTEXITCODE -ne 0) { $fail = 1 }
+          }
+          exit $fail
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # RELEASE GATE · the licence boundary
+  #
+  # "Core depends on ee/" discovered at release is expensive. Discovered on the
+  # commit that introduces it, it is free.
+  # ══════════════════════════════════════════════════════════════════════════
+  licence:
+    name: licence boundary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci --no-audit --no-fund
+      - name: SPDX headers, and the commercial identifier confined to ee/
+        run: npm run check:license
+      - name: rm -rf ee/ still builds and passes the full suite
+        run: npm run check:core-alone
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # RELEASE GATE · the strip gate (§8)
+  #
+  # "The single riskiest step. Nothing ships until it is clean."
+  # ══════════════════════════════════════════════════════════════════════════
+  strip:
+    name: strip gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The leak scan classifies findings by whether a file actually ships,
+          # which it answers by asking git. A shallow clone would make it wrong.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci --no-audit --no-fund
+      - name: nothing personal ships
+        run: npm run leak-scan
+      - name: the core stays runtime-agnostic
+        run: npm run check:no-bun
+      - name: no GPL/AGPL dependency (it would force Core's own licence)
+        run: npm run sbom
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # RELEASE GATE 1 · the gate holds
+  #
+  # 00-MASTER-BUILD-BRIEF.md §10.1: "This test is non-negotiable and runs in CI."
+  #
+  # Run as its own job so that a failure here is unmissable in the checks list,
+  # rather than one line inside a 144-test run.
+  # ══════════════════════════════════════════════════════════════════════════
+  gate:
+    name: RELEASE GATE · the gate holds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+
+      - name: the egress test — secret and do_not_learn absent from every read path
+        run: node --test packages/core/dist/vault/brain.test.js
+
+      - name: invariant 2 — no tool accepts a ceiling argument
+        run: node --test packages/mcp/dist/server.test.js
+
+      - name: the classifier — key shapes, path floor, OCR floor, banding, re-scan
+        run: node --test packages/core/dist/gate/patterns.test.js
+
+      - name: the inherited-defect manifest
+        run: node --test tests/dist/defects
+
+      - name: ee/ can only narrow, over the full cross-product
+        run: |
+          npm run build:ee
+          npm run test:ee
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # The diagram set must render offline and stay visually consistent.
+  # ══════════════════════════════════════════════════════════════════════════
+  diagrams:
+    name: diagrams
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci --no-audit --no-fund
+
+      - name: dark · masked · legended · offline-safe · linked
+        run: npm run check:diagrams
+
+      # A committed diagram that does not match its generator is a diagram that
+      # will be silently wrong the next time anyone regenerates.
+      - name: the committed diagrams match their generator
+        run: |
+          npm run diagrams
+          if ! git diff --quiet -- docs/diagrams; then
+            echo "::error::docs/diagrams is out of date. Run \`npm run diagrams\` and commit."
+            git --no-pager diff --stat -- docs/diagrams
+            exit 1
+          fi

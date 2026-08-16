@@ -1,0 +1,71 @@
+# Sutra
+
+> A governed knowledge substrate. Notes stay plain markdown in a git repo the
+> user owns; every note carries a sensitivity tier; a gate sits between those
+> notes and every model, and the model cannot lift it.
+
+This file describes the **Sutra codebase** for a model reading it. A *vault*
+generates its own `llms.txt` from public-tier notes only — see
+`automation/scripts/publish/build-llms-txt.ps1`.
+
+## What it claims
+
+Your AI can reason over everything you know, and provably cannot leak what you
+marked private. "Provably" means: one command reports what is visible and what
+is withheld, computed by the same code the read paths use.
+
+## Start here
+
+- [README.md](README.md): what it is, how to run it, the three shapes
+- [CLAUDE.md](CLAUDE.md): instructions for an AI working ON this codebase
+- [AGENTS.md](AGENTS.md): instructions for an AI working WITH a user's vault
+- [Master_documentation/00-START-HERE.md](Master_documentation/00-START-HERE.md): the canonical doc set
+
+## The gate — read this before anything else
+
+- [packages/core/src/gate/guard.ts](packages/core/src/gate/guard.ts): the comparison. ~120 lines, no dependencies.
+- [packages/core/src/gate/tiers.ts](packages/core/src/gate/tiers.ts): the ONE tier normaliser. Never compare a raw frontmatter string to a literal.
+- [packages/core/src/vault/brain.ts](packages/core/src/vault/brain.ts): `visible()` — every read path goes through it
+- [packages/core/src/gate/patterns.ts](packages/core/src/gate/patterns.ts): the classifier, reading the shared rule set
+- [automation/policies/secret-patterns.json](automation/policies/secret-patterns.json): THE single source of truth for detection. Never hardcode a pattern anywhere else.
+
+Four independent enforcement points, deliberately redundant: each has failed
+independently in the system Sutra was extracted from, and the other three held.
+
+## Surfaces
+
+- [packages/mcp/src/server.ts](packages/mcp/src/server.ts): 14 tools over stdio, zero dependencies. No tool accepts a ceiling, tier, scope or override — a test walks every published schema on every build.
+- [packages/cli/src/index.ts](packages/cli/src/index.ts): the CLI. Every read supports `--json`.
+- [packages/cli/src/exit.ts](packages/cli/src/exit.ts): exit codes are a governance signal. 4, 5 and 7 are three different refusals with three different remedies.
+
+## The pipeline
+
+- [automation/scripts/ingest.ps1](automation/scripts/ingest.ps1): intake → manifest → extract → classify
+- [automation/scripts/auto-compile.ps1](automation/scripts/auto-compile.ps1): extract → durable page. NO INPUT CLIP, ever.
+- [automation/scripts/graph-export.ps1](automation/scripts/graph-export.ps1): wikilinks → graph, anti-regression guard inside the builder
+- [automation/scripts/orchestrator/daily.ps1](automation/scripts/orchestrator/daily.ps1): the orchestrator. Five outcomes, never one counter.
+
+## Why it is built this way
+
+- [INHERITED-DEFECTS.md](INHERITED-DEFECTS.md): 39 defects from the live system, each with a named test. **Every design decision in this repo cites one.**
+- [Master_documentation/06-mechanisms/README.md](Master_documentation/06-mechanisms/README.md): the load-bearing machinery, and how each piece SILENTLY BREAKS. Read before touching a live surface.
+- [Master_documentation/05-decisions/README.md](Master_documentation/05-decisions/README.md): the load-bearing choices, their alternatives, and their reversibility
+
+## What is NOT done
+
+- [Master_documentation/10-implementation/README.md](Master_documentation/10-implementation/README.md): the drift table — built-but-not-wired, and claimed-but-not-verified
+- [Master_documentation/12-deferred/README.md](Master_documentation/12-deferred/README.md): the parking lot, with reasons
+
+## Optional
+
+- [ee/README.md](ee/README.md): Sutra Enterprise. COMMERCIAL — Apache-2.0 does not apply there. It can only narrow access, never widen it.
+- [docs/diagrams/index.html](docs/diagrams/index.html): six dark interactive views. They render offline.
+
+## Rules for changing this code
+
+- Degradation is allowed. Silent degradation is not.
+- Write the test before you believe the fix.
+- Assert positive coverage on every guard — a rule that fires zero times looks exactly like a rule protecting a clean corpus.
+- One policy engine, N thin bindings.
+- No input clip. Anywhere. Ever.
+- Created ≠ wired: grep for the caller, not the file.
