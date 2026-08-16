@@ -149,7 +149,19 @@ function Join-VaultPath {
   param([Parameter(Mandatory)][string]$Root, [Parameter(Mandatory)][string[]]$Parts)
   $p = $Root
   foreach ($part in $Parts) {
-    foreach ($seg in ($part -split '[\/]')) {
+    # `-split` takes a REGEX. The class must be '[\\/]' with TWO backslashes:
+    # '[\/]' is an escaped forward slash and matches ONLY `/`, never `\`.
+    #
+    # This file shipped with the one-backslash version, and it was D26 exactly:
+    # `Join-VaultPath '/tmp' 'state\checks'` produced `/tmp/state\checks` — a
+    # single directory whose NAME contains a backslash. On Windows the test
+    # passed, because [IO.Path]::Combine treats `\` as a separator there anyway,
+    # so the wrong split produced the right answer. Only the Linux CI runner
+    # could see it.
+    #
+    # "Invisible on Windows and silent on Linux" is D26's own description, and
+    # it applied to the helper written to prevent D26.
+    foreach ($seg in ($part -split '[\\/]')) {
       if ($seg -ne '') { $p = [IO.Path]::Combine($p, $seg) }
     }
   }
