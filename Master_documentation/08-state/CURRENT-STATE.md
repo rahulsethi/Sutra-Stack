@@ -4,22 +4,23 @@
 
 <!-- SYNC-STAMP:START (auto) -->
 - **Updated:** 2026-08-16 (current)
-- **Heads:** repo `e1a3961`
+- **Heads:** repo `a11b8fb`
 <!-- SYNC-STAMP:END -->
 
 ## Headline
 
-Sutra v1.0 is **built and working end to end**, on Windows, verified by running
-it rather than by reading it. A fresh `sutra init` reaches prove-it: it captures
+Sutra v1.0 is **built and working end to end**, verified by running it rather
+than by reading it, and green in CI on Linux, macOS and Windows. A fresh `sutra init` reaches prove-it: it captures
 something, answers a question with citations, and demonstrates the same question
 returning different material at a local ceiling and a cloud one — with a secret
 note provably withheld from the second.
 
-**144 TypeScript tests and 33 PowerShell tests pass.** The leak scan is clean,
-the licence boundary is clean, and `rm -rf ee/` builds and passes the full suite.
+**144 TypeScript tests and 33 PowerShell tests pass**, and **CI is green on
+Linux, macOS and Windows**. The leak scan is clean, the licence boundary is
+clean, and `rm -rf ee/` builds and passes the full suite.
 
 It is **not released**. One owner action blocks that (credential rotation), and
-four things are honestly incomplete — all listed below and in the drift table.
+three things are honestly incomplete — all listed below and in the drift table.
 
 ## What runs, and how to verify it
 
@@ -34,6 +35,7 @@ four things are honestly incomplete — all listed below and in the drift table.
 | The commit hook | stage a file containing a key shape | **refused in 297 ms** |
 | The diagram set | `npm run check:diagrams` | 6 diagrams; two verified visually in a browser |
 | `ee/` | `npm run test:ee` | 23 tests, incl. the 162-combination narrows-only sweep |
+| CI | `gh run list` | **7/7 jobs green** on ubuntu, macos and windows (run `31955683697`) |
 
 ## Recently changed
 
@@ -48,14 +50,12 @@ owner-only. → [`../11-user-actions/`](../11-user-actions/) U1.
 
 **Honestly incomplete**, in priority order:
 
-1. **CI has never run.** The workflows are written; no push has triggered them.
-   Everything so far was verified on Windows only.
-2. **No provider dispatch.** `Invoke-Synthesis` selects a provider and returns
+1. **No provider dispatch.** `Invoke-Synthesis` selects a provider and returns
    `$null`. Deterministic-first is the shipped mode, and it works — but this is
    a gap, not a feature.
-3. **The defect manifest is partial.** 17 of 39 defects have named absence
+2. **The defect manifest is partial.** 17 of 39 defects have named absence
    tests.
-4. **No retrieval eval.** `sutra eval` does not exist, so retrieval quality is
+3. **No retrieval eval.** `sutra eval` does not exist, so retrieval quality is
    unmeasured.
 
 Full list with reasons: [`../12-deferred/`](../12-deferred/).

@@ -44,8 +44,8 @@ repeatedly marked things done that had never run.
 | **The defect manifest is incomplete** | 17 named tests cover D1, D4, D5, D9, D11, D13, D14, D15, D18, D24, I13, I14, §9.1, D28, D29. `INHERITED-DEFECTS.md` lists **39**. The rest are addressed in code with reasoning but have **no named absence test**. | One test per remaining defect, each failing against a planted instance. |
 | **Provider dispatch is not implemented** | `Invoke-Synthesis` selects a provider, records health, and returns `$null`. There is **no HTTP client**. Sutra ships deterministic-first, and a half-written client that sometimes works is worse than an honest "no model configured" — but this is a gap, not a feature. | Implement dispatch; assert `extract.Length` chars arrive (report 20's test R13). |
 | **Second-user validation has not happened** | Gate 1 requires a real second person to stand this up unaided and use it for two weeks. **Nobody has.** | Exactly that. It is the gate that is easiest to fudge and most worth honouring. |
-| **CI is not running** | Workflows are written. They have **never executed** — the repo is private and no push has triggered them. | Push and watch a run go green. |
-| **No cross-OS run** | Everything was verified on Windows. M1's verify requires Linux **and** Windows runners. | The CI matrix, once it runs. |
+| ~~CI is not running~~ | **CLOSED 2026-08-16.** Run `31955683697` — all 7 jobs green, including the release-gate job. | — |
+| ~~No cross-OS run~~ | **CLOSED 2026-08-16.** Green on ubuntu-latest, macos-latest and windows-latest. The matrix caught a real D26 on its first run; see below. | — |
 | **No retrieval eval** | M6/`sutra eval` — a golden set with known answers — does not exist. Retrieval quality is therefore **unmeasured**, and the register is explicit that an unmeasured retrieval layer cannot be improved safely. | A 50-question graded set over a shipped demo corpus, with a committed baseline. |
 
 ---
@@ -65,10 +65,18 @@ fixes.
 | 6 | The leak scan | Personal content in a config file copied from the source vault — references to the upstream personal feeder that §8 requires removed — plus two hardcoded key shapes in my own probe code. |
 | 7 | **Opening a diagram in a browser** | Two CDN `<script>` tags in `<head>` without `defer` — with no network the page showed **nothing** until each request timed out. `check-diagrams` had passed it, because *"the dark token is in the file"* and *"the page renders dark"* are different claims. |
 | 8 | `created-not-wired.test.ts`, on first run | `package.json` declared a `third-party` script pointing at a file that **did not exist**, and the CLI advertised `sutra backup` and `sutra publish llms` with **no scripts behind them**. |
+| 9 | **The Linux CI runner, on its first run** | `Join-VaultPath` split on the regex `[\/]`. With ONE backslash that is an escaped forward slash, matching only `/` and never `\` — so it produced `/tmp/state\checks`, a single directory whose *name* contains a backslash. **D26, in the helper written to prevent D26.** Invisible on Windows, where `[IO.Path]::Combine` treats `\` as a separator anyway and the wrong split gives the right answer. |
 
 Numbers 5 and 7 are the same lesson twice: **measuring the wrong thing** rather
 than lacking data. The upstream register recorded that four of its own six wrong
 claims had that cause.
+
+Number 9 is the argument for the cross-OS matrix, made by the matrix itself on
+its first run. The test was already correct — it asserted **segment count**
+rather than "the string contains no backslash", precisely because the naive
+assertion passes vacuously on Windows, where the correct output and the bug are
+character-identical. A test that could only fail on the platform that does not
+exercise the bug would have proved nothing.
 
 ---
 

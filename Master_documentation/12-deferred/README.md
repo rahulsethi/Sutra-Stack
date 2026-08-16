@@ -9,7 +9,6 @@ here with a reason and a priority.
 | **Provider dispatch (the HTTP client)** | Sutra ships deterministic-first. A half-written client that sometimes works is worse than an honest "no model configured". Whatever implements it must receive the extract **in full** (D1). | **H** | 2026-08-16 |
 | **`sutra eval` — the retrieval golden set** | M6. Needs a 50-question graded set over a shipped demo corpus. **An unmeasured retrieval layer cannot be improved safely**, so this is the one place "just ship it" is the wrong instinct. | **H** | 2026-08-16 |
 | **The remaining defect tests** | 17 of 39 defects have named absence tests. The rest are addressed in code with reasoning but have no test that fails against a planted instance. | **H** | 2026-08-16 |
-| **A cross-OS CI run** | Workflows are written but have never executed. Everything so far was verified on Windows only. | **H** | 2026-08-16 |
 | Typed knowledge graph (`automation/kg/`) | An optional module in the brief. The wikilink graph covers the core need. | M | 2026-08-16 |
 | Multimodal extraction (PDF, OCR) | The classifier's OCR floor (I16) is implemented and tested; the extractors themselves are not. `extract_reason` reports `tool-missing`, which is retryable by design. | M | 2026-08-16 |
 | `sutra vault reconcile` | D25's safe reconcile — snapshot to a rescue branch, *then* sync. `backup.ps1` covers the snapshot half. | M | 2026-08-16 |
