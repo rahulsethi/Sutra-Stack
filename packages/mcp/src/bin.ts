@@ -13,7 +13,7 @@
  * is to run, so there is no condition to get wrong.
  */
 import { runStdioServer } from "./server.js";
-import { loadConfig } from "@sutra/core";
+import { loadConfig } from "@sutra/aatma-core";
 
 runStdioServer(loadConfig())
   .then((code) => process.exit(code))

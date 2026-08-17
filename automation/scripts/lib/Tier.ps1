@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 <#
 .SYNOPSIS
-  The tier normaliser. Lifted from `automation/scripts/lib/Tier.ps1`.
+  AATMA - the tier normaliser, PowerShell binding. The twin of
+  `packages/core/src/gate/tiers.ts`; the two must never disagree.
 
 .DESCRIPTION
   The PowerShell twin of `packages/core/src/gate/tiers.ts`. The two must agree

@@ -43,7 +43,12 @@ param(
   [string]$Destination,
   [switch]$Prune,
   [int]$KeepDays = 30,
-  [int]$KeepMinimum = 3
+  [int]$KeepMinimum = 3,
+  # D27 requires `-WhatIf` to be EXERCISED IN CI, not merely offered. A dry run
+  # nobody has ever run is a dry run that does not work, and this is the one
+  # command where finding that out for real costs you the snapshots.
+  [switch]$WhatIf,
+  [double]$RotateLogsAtMb = 8
 )
 
 Set-StrictMode -Version Latest
@@ -74,6 +79,8 @@ if ($isGit) {
       Write-Warning "git status failed in $VaultRoot - skipping the safety commit."
     } elseif ([string]::IsNullOrWhiteSpace(($dirty | Out-String))) {
       Write-Host "  git: working tree clean, nothing to commit"
+    } elseif ($WhatIf) {
+      Write-Host "  WOULD commit: $(@($dirty).Count) change(s) as a safety snapshot"
     } else {
       $count = @($dirty).Count
       & git add -A 2>$null | Out-Null
@@ -96,21 +103,39 @@ if ($isGit) {
 # Notes and policy only. Derived artifacts are excluded BY DESIGN: they are
 # rebuildable (invariant 1), they are the bulk of the bytes, and a backup that
 # is mostly regenerable cache is one people stop taking.
-$snapshotDir = Join-VaultPath -Root $Destination -Parts @("vault-$stamp")
+# D27/D35 · THE HOST IS IN THE NAME.
+#
+# Without it, retention cannot reason per host — and "keep the newest 3" on a
+# directory two machines write into can delete BOTH of one machine's copies while
+# keeping three of the other's. Same root cause as D35's phantom shrink: a shared
+# directory whose entries are ordered as though one machine produced them.
+$hostTag = ([Environment]::MachineName -replace '[^A-Za-z0-9_-]', '-').ToLowerInvariant()
+$snapshotDir = Join-VaultPath -Root $Destination -Parts @("vault-$stamp--$hostTag")
 $sourceDirs = @('vault', 'automation/policies', 'automation/config')
 
 $copied = 0
 foreach ($rel in $sourceDirs) {
   $src = Join-VaultPath -Root $VaultRoot -Parts @($rel)
   if (-not (Test-Path -LiteralPath $src)) { continue }
+  $copied += @(Get-ChildItem -LiteralPath $src -Recurse -File -ErrorAction SilentlyContinue).Count
+  # `-WhatIf` MUST BE A FULL DRY RUN, not a dry prune with a live copy.
+  #
+  # The first version guarded only the prune, so `-WhatIf` still wrote a whole
+  # new snapshot directory — which then counted as a host in the retention
+  # grouping. A flag whose name promises "nothing happened" and which does most
+  # of the work anyway is silent degradation with a reassuring label, and it is
+  # worse here than elsewhere: the whole point of the flag is to be trusted
+  # before a destructive operation.
+  if ($WhatIf) { continue }
   $dst = Join-VaultPath -Root $snapshotDir -Parts @($rel)
   New-Item -ItemType Directory -Path $dst -Force | Out-Null
   Copy-Item -LiteralPath $src -Destination (Split-Path -Parent $dst) -Recurse -Force
-  $copied += @(Get-ChildItem -LiteralPath $src -Recurse -File -ErrorAction SilentlyContinue).Count
 }
 
 $considered += $copied
-if ($copied -gt 0) {
+if ($WhatIf) {
+  Write-Host "  WOULD copy: $copied file(s) -> $snapshotDir"
+} elseif ($copied -gt 0) {
   $produced++
   Write-Host "  copy: $copied file(s) -> $snapshotDir"
 } else {
@@ -122,20 +147,69 @@ if ($Prune) {
   $snapshots = @(Get-ChildItem -LiteralPath $Destination -Directory -Filter 'vault-*' -ErrorAction SilentlyContinue |
                  Sort-Object Name -Descending)
 
-  # THE HARD FLOOR. The newest N are never pruned, whatever their age. A
-  # retention job that can delete the last good copy is a data-loss tool with a
-  # tidy name.
-  $protected = @($snapshots | Select-Object -First $KeepMinimum)
+  # THE HARD FLOOR, PER HOST. The newest N FROM EACH HOST are never pruned,
+  # whatever their age. A retention job that can delete the last good copy is a
+  # data-loss tool with a tidy name — and a GLOBAL floor is exactly that on a
+  # two-machine setup: three snapshots from the laptop satisfy "keep 3" while the
+  # desktop's only copy ages out.
+  #
+  # A snapshot with no host tag predates this and is grouped under '(untagged)',
+  # which gets its own floor rather than being lumped in with a real host.
+  $hostOf = {
+    param($name)
+    $m = [regex]::Match($name, '^vault-.+?--(?<h>[A-Za-z0-9_-]+)$')
+    if ($m.Success) { $m.Groups['h'].Value } else { '(untagged)' }
+  }
+
+  $protectedNames = New-Object System.Collections.Generic.HashSet[string]
+  foreach ($grp in ($snapshots | Group-Object { & $hostOf $_.Name })) {
+    foreach ($keep in @($grp.Group | Sort-Object Name -Descending | Select-Object -First $KeepMinimum)) {
+      [void]$protectedNames.Add($keep.Name)
+    }
+  }
+
   $cutoff = (Get-Date).AddDays(-$KeepDays)
   $candidates = @($snapshots | Where-Object {
-    $_.Name -notin $protected.Name -and $_.CreationTime -lt $cutoff
+    -not $protectedNames.Contains($_.Name) -and $_.CreationTime -lt $cutoff
   })
 
   foreach ($c in $candidates) {
+    if ($WhatIf) {
+      Write-Host "  WOULD prune: $($c.Name)"
+      continue
+    }
     Remove-Item -LiteralPath $c.FullName -Recurse -Force
     Write-Host "  pruned: $($c.Name)"
   }
-  Write-Host "  retention: $($candidates.Count) pruned, $($protected.Count) protected by the floor, $($snapshots.Count - $candidates.Count) kept"
+
+  $verb = if ($WhatIf) { 'would prune' } else { 'pruned' }
+  $hosts = @($snapshots | Group-Object { & $hostOf $_.Name }).Count
+  Write-Host "  retention: $($candidates.Count) $verb, $($protectedNames.Count) protected by the floor across $hosts host(s), $($snapshots.Count - $candidates.Count) kept"
+}
+
+# ── 4 · Provider logs are ROTATED, NEVER DELETED ─────────────────────────────
+# D27's other half, and the half with the sharper edge. `provider.ndjson` is the
+# HEALTH GROUND TRUTH: it is the only record of whether a key has ever once
+# succeeded, which is what separates a dead key from a rate limit (I3). Pruning
+# it to save 7.5 MB destroys the evidence needed to diagnose the thing the prune
+# was tidying up after.
+#
+# So it rotates: the live file is truncated to a new generation, and the old
+# generation is KEPT. Nothing here deletes a log.
+$providerLog = Join-VaultPath -Root $VaultRoot -Parts @('logs', 'sutra', 'provider.ndjson')
+if ($Prune -and (Test-Path -LiteralPath $providerLog)) {
+  $sizeMb = ((Get-Item -LiteralPath $providerLog).Length / 1MB)
+  if ($sizeMb -ge $RotateLogsAtMb) {
+    $rotated = "$providerLog.$stamp"
+    if ($WhatIf) {
+      Write-Host ("  WOULD rotate: provider.ndjson ({0:N1} MB) -> {1}" -f $sizeMb, (Split-Path -Leaf $rotated))
+    } else {
+      Move-Item -LiteralPath $providerLog -Destination $rotated
+      Write-Host ("  rotated: provider.ndjson ({0:N1} MB) -> {1} (KEPT, not deleted)" -f $sizeMb, (Split-Path -Leaf $rotated))
+    }
+  } else {
+    Write-Host ("  provider log: {0:N1} MB, under the {1} MB rotation threshold" -f $sizeMb, $RotateLogsAtMb)
+  }
 }
 
 Write-Host ""

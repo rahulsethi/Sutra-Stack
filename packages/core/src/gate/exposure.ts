@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
  * The exposure policy — lifted verbatim in behaviour from
- * `aatma/src/mcp/exposure-policy.ts`.
+ * AATMA · the exposure ceiling.
  *
  * A *promotion* lifts ONE named note above the current ceiling, for a bounded
  * time. It is how a person says "yes, this particular private note may go to

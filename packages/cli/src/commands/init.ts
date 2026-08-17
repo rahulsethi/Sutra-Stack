@@ -37,7 +37,7 @@ import { spawnSync } from "node:child_process";
 import {
   loadConfig, VaultClient, Brain, ask, writeCapture, classify, loadPatternSet,
   TIER_DISPLAY, CONFIG_FILENAME, findPwsh, type Tier,
-} from "@sutra/core";
+} from "@sutra/aatma-core";
 import { EXIT, type ExitCode } from "../exit.js";
 import { say, heading, check, emitJson, c, type OutputMode } from "../output.js";
 import { flagBool, flagString, type ParsedArgs } from "../args.js";

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * THE SUTRA MCP SERVER — lifted structurally from `aatma/src/mcp/server.ts`.
+ * HERMES · THE SUTRA MCP SERVER. The integration surface every harness speaks
+ * to, and the outermost place AATMA's gate is applied.
  *
  * Newline-delimited JSON-RPC 2.0 over stdio. The protocol is implemented
  * directly rather than through an SDK, which is a deliberate constraint: this
@@ -20,8 +21,9 @@
  * readonly, and no tool handler receives it, reads it, or can change it.
  *
  * NO TOOL TAKES A TIER, A CEILING, AN EXPOSURE, OR AN OVERRIDE AS AN ARGUMENT.
- * `tests/defects/no-ceiling-argument.test.ts` walks every published
- * `inputSchema` and fails the build if one ever appears. That test exists
+ * `packages/mcp/src/server.test.ts` — "INVARIANT 2 · NO tool accepts a ceiling,
+ * tier, exposure or override argument" — walks every published `inputSchema`
+ * and fails the build if one ever appears. That test exists
  * because this is the property most likely to be eroded by a well-meaning
  * feature request — "could the tool just take an optional scope?" — and the
  * answer has to be structurally no rather than culturally no.
@@ -65,7 +67,7 @@ import {
   type SutraConfig,
   type Tier,
   type RedactionEntry,
-} from "@sutra/core";
+} from "@sutra/aatma-core";
 
 const PROTOCOL_VERSION = "2024-11-05";
 const SERVER_INFO = { name: "sutra", version: "1.0.0" };

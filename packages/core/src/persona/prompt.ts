@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * PERSONA PROMPT ASSEMBLY — lifted from `aatma/src/parvo/persona.ts`.
+ * PARVO · persona prompt assembly. Who the assistant is, assembled from what
+ * the current ceiling permits — never from more.
  *
  * A pure function: given the identity bundle that `Brain.identityBundle()`
  * already gate-filtered, compose the system prompt that gives a chat model the

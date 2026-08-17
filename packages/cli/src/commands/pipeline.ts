@@ -20,7 +20,7 @@ import {
   runPwsh, RunRecorder, withLocks, appendMetrics, appendRunLog,
   loadPatternSet, classify, coerceTier, raiseOnly, isDownscope, TIER_DISPLAY,
   auditLog, type Tier, type StageResult,
-} from "@sutra/core";
+} from "@sutra/aatma-core";
 import { EXIT, SutraError, type ExitCode } from "../exit.js";
 import { say, emitJson, heading, warn, c, type OutputMode } from "../output.js";
 import { flagBool, flagString, type ParsedArgs } from "../args.js";

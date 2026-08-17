@@ -110,7 +110,14 @@ $nodes = New-Object System.Collections.ArrayList
 $edges = New-Object System.Collections.ArrayList
 $byTitle = @{}
 $byId = @{}
+$nodeById = @{}
 $withheldDnl = 0
+
+# D37 · The frontmatter keys that record WHO OR WHAT produced a note. Carried
+# onto every node as a set. Adding a producer means adding its key HERE, in one
+# place — which is the point: the alternative is remembering to copy a field at
+# every stage that builds a record, and upstream that was forgotten exactly once.
+$ProvenanceKeys = @('extractor', 'source_engine', 'synthesis_provider', 'synthesis_model')
 
 foreach ($root in $liveRoots) {
   foreach ($file in (Get-NoteFiles -Root $root)) {
@@ -149,6 +156,42 @@ foreach ($root in $liveRoots) {
         sensitivity = $tier
       }
     }
+
+    # ── D37 · PROVENANCE SURVIVES THE MERGE ──────────────────────────────────
+    # The block above enumerates fields explicitly, and that is D37's exact
+    # shape: "a field added at one end of a pipeline dies at the first stage that
+    # enumerates fields explicitly." Upstream, an extractor stamp was written on
+    # ~7,900 input records and present in ZERO output records, because the
+    # builder listed `name`, `type`, `aliases`, `mentions`, `degree` and simply
+    # never copied it across. Both halves passed their own tests; neither test
+    # spanned the seam.
+    #
+    # So provenance is carried through by NAME-LIST rather than re-enumerated per
+    # field, and it is a SET: one node legitimately has several provenances when
+    # the same id is written by more than one pass. `$null` is never a member -
+    # an unstamped note contributes nothing rather than an empty string.
+    $prov = New-Object System.Collections.ArrayList
+    foreach ($key in $ProvenanceKeys) {
+      if (-not $fm.ContainsKey($key)) { continue }
+      $v = $fm[$key]
+      if ($null -eq $v) { continue }
+      $sv = ([string]$v).Trim()
+      if ($sv -eq '') { continue }
+      $stamp = "$key=$sv"
+      if (-not $prov.Contains($stamp)) { [void]$prov.Add($stamp) }
+    }
+
+    if ($byId.ContainsKey($id) -and $nodeById.ContainsKey($id)) {
+      # The same id twice. MERGE the provenance sets rather than letting the
+      # second write erase the first - that erasure is the defect, one level up.
+      $existing = $nodeById[$id].data['provenance']
+      foreach ($stamp in $prov) { if ($existing -notcontains $stamp) { $existing += $stamp } }
+      $nodeById[$id].data['provenance'] = @($existing)
+      continue
+    }
+
+    $node.data['provenance'] = @($prov)
+    $nodeById[$id] = $node
     [void]$nodes.Add($node)
     $byId[$id] = $id
     $byTitle[$label.ToLowerInvariant()] = $id

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * TURN ROUTING — lifted from `aatma/src/parvo/routing.ts`.
+ * PARVO · turn routing. Which model may serve this turn, decided by AATMA's
+ * ceiling before anything else is considered.
  *
  * A pure decision: given a ceiling and the provider a conversational turn would
  * use, decide local-vs-hosted and whether the turn is ALLOWED.

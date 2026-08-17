@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * VaultClient — ported from `aatma/src/dimaag-client.ts`.
+ * DIMAAG · the vault client. The substrate's own view of the user's repo.
  *
  * Owns filesystem access to the user's vault: paths, counts, identity files,
  * the ISA (project) list. It deliberately knows nothing about tiers — the gate

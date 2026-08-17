@@ -7,7 +7,7 @@
  * team asks for it, at which point it is the whole deal.
  *
  * ── SUTRA HAS AN UNUSUALLY EASY TIME HERE, AND SHOULD SAY SO ──────────────
- * `@sutra/core` has ONE runtime dependency. `@sutra/mcp` has ZERO. That was a
+ * `@sutra/aatma-core` has ONE runtime dependency. `@sutra/hermes-mcp` has ZERO. That was a
  * design constraint for auditability — the thing deciding what your AI can see
  * should be readable in an afternoon — and it pays a second time here: an SBOM
  * with four entries is one a security team actually reads.
@@ -54,8 +54,8 @@ export const DEFAULT_POLICY: DependencyPolicy = {
   maxRuntimeDependencies: {
     // These numbers are the product's auditability claim, expressed as a limit.
     // Raising one is a deliberate act with a reason attached.
-    "@sutra/core": 1,   // gray-matter
-    "@sutra/mcp": 0,    // zero, by design. The MCP server is the trust surface.
+    "@sutra/aatma-core": 1,   // gray-matter
+    "@sutra/hermes-mcp": 0,    // zero, by design. The MCP server is the trust surface.
     "@sutra/cli": 0,    // workspace-internal only
   },
 };

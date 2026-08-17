@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * @sutra/core — the governance core.
+ * @sutra/aatma-core — the governance core.
  *
  * A governed personal knowledge substrate: notes are plain markdown in a git
  * repo, every note carries a sensitivity tier, a deterministic pipeline turns

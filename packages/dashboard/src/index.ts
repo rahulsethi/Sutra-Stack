@@ -9,7 +9,7 @@
  * Plain HTML, CSS and ES modules from `public/`. No bundler, no framework, no
  * transpile step.
  *
- * The reasoning is the same one that keeps `@sutra/mcp` at zero dependencies:
+ * The reasoning is the same one that keeps `@sutra/hermes-mcp` at zero dependencies:
  * this is the surface that renders SECRET-TIER CONTENT to the operator's own
  * screen, and a build pipeline is a supply chain. A dashboard whose source you
  * can read in the browser, with view-source, is one whose behaviour you can

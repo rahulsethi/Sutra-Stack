@@ -16,7 +16,7 @@
 import {
   loadConfig, VaultClient, Brain, ask, hybridSearch, semanticSearch,
   extractSection, isHostedContext, ceilingFromEnv, TIER_DISPLAY, type Tier, type SutraConfig,
-} from "@sutra/core";
+} from "@sutra/aatma-core";
 import { EXIT, SutraError, type ExitCode } from "../exit.js";
 import { say, emitJson, heading, table, degraded, c, type OutputMode } from "../output.js";
 import { flagString, flagNumber, flagBool, type ParsedArgs } from "../args.js";

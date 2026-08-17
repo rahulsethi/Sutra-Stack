@@ -150,7 +150,7 @@ what your change made unused.
 ## 4 · Repository map
 
 ```
-packages/core/       @sutra/core   — the governance core. ONE dependency.
+packages/core/       @sutra/aatma-core   — the governance core. ONE dependency.
   src/gate/          tiers · guard · exposure · containment · patterns · redact · override
   src/vault/         client · brain (the gated corpus) · capture (the floored write)
   src/retrieval/     lexical (BM25+RRF) · semantic · graph · hybrid · section · ask

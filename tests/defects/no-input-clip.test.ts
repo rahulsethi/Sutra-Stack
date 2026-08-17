@@ -37,7 +37,7 @@ import { readdirSync, readFileSync, mkdtempSync, mkdirSync, writeFileSync } from
 import { join, relative, sep, dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
-import { VaultClient, Brain, ask, type SynthesizeFn } from "@sutra/core";
+import { VaultClient, Brain, ask, type SynthesizeFn } from "@sutra/aatma-core";
 
 /**
  * Find the repo root by walking up for the root manifest.

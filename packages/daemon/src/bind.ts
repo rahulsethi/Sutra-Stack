@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * THE BIND POLICY — lifted from `aatma/src/auth.ts`.
+ * HERMES · THE BIND POLICY. What may listen on a socket, and on which interface.
  *
  * 00-MASTER-BUILD-BRIEF.md §7 M6's verify names this specifically:
  * *"`assertBindPolicy` still refuses a non-loopback bind with no secret and no

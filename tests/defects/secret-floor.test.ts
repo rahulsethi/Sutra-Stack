@@ -110,7 +110,7 @@ test("I13 · the MCP package cannot reach the break-glass or the reveal ceiling"
 test("I13 · the planted-caller check actually fires", () => {
   // The rule: a guardrail test never seen to fail is not evidence. Run the same
   // detection over a synthetic file and confirm it trips.
-  const planted = "import { authorizeSecretEgress } from '@sutra/core';\nawait cron.run(() => authorizeSecretEgress(root, pass, id));\n";
+  const planted = "import { authorizeSecretEgress } from '@sutra/aatma-core';\nawait cron.run(() => authorizeSecretEgress(root, pass, id));\n";
   assert.ok(/\bauthorizeSecretEgress\b/.test(planted),
     "the detection pattern does not match a plain import — a clean result would prove nothing");
 });

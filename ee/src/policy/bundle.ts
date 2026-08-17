@@ -43,7 +43,7 @@
 import { createHash, createVerify, timingSafeEqual } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import { type Tier, TIER_RANK, coerceTier } from "@sutra/core";
+import { type Tier, TIER_RANK, coerceTier } from "@sutra/aatma-core";
 
 export interface PolicyBundle {
   /** Monotonic. A node REFUSES a bundle older than the one it holds. */

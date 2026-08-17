@@ -24,7 +24,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { homedir } from "node:os";
-import { loadConfig, TIER_DISPLAY, type Tier } from "@sutra/core";
+import { loadConfig, TIER_DISPLAY, type Tier } from "@sutra/aatma-core";
 import { EXIT, SutraError, type ExitCode } from "../exit.js";
 import { say, emitJson, heading, warn, c, type OutputMode } from "../output.js";
 import { flagString, flagBool, type ParsedArgs } from "../args.js";

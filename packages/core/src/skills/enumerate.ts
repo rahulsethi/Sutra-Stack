@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Skill enumeration — ported from `aatma/src/mcp/skills.ts`.
+ * DIMAAG · skill enumeration.
  *
  * ── THE STRUCTURAL TRUST SPLIT ─────────────────────────────────────────────
  * Upstream had 47 runtime skills in one tree, with exposure decided per-skill by

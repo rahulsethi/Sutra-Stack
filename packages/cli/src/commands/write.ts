@@ -14,7 +14,7 @@ import {
   writeCapture, auditLog, authorizeSecretEgress, secretRevealCeiling,
   resolveOverrideSecret, isHostedContext, pendingRequests, loadPolicy,
   resolveExpiry, Brain, VaultClient, TIER_DISPLAY, ALLOWLIST_REL, REQUESTS_REL,
-} from "@sutra/core";
+} from "@sutra/aatma-core";
 import { EXIT, SutraError, type ExitCode } from "../exit.js";
 import { say, emitJson, heading, table, warn, c, type OutputMode } from "../output.js";
 import { flagString, type ParsedArgs } from "../args.js";

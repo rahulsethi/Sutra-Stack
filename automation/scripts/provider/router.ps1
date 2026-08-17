@@ -93,6 +93,43 @@ function Get-EnvSafe {
   return $v
 }
 
+function Get-PropSafe {
+  <#
+  .SYNOPSIS
+    D19 - a StrictMode-safe property read on a ConvertFrom-Json object.
+  .DESCRIPTION
+    THE SAME DEFECT AS `Get-EnvSafe`, one type over, and it was live in this file.
+
+    Under `Set-StrictMode -Version Latest`, reading a property that a
+    PSCustomObject does not have THROWS:
+
+        The property 'excluded_tasks' cannot be found on this object.
+
+    `ConvertFrom-Json` only creates properties for keys that are PRESENT, so a
+    provider entry written without an optional key - which is every minimal
+    entry a user will write - made `$Provider.excluded_tasks` throw. Likewise
+    `$Config.tasks.$Task` threw for any task not listed under `tasks`.
+
+    It is D19 exactly: a CLIENT-SIDE fault, raised before any network I/O, whose
+    message ("the property 'synthesis' cannot be found") reads like a
+    response-parsing problem rather than a config shape problem. And the code
+    below it was already written for `$null` - `if ($null -ne $taskCfg ...)` -
+    so the author's intent was right and the language did not deliver it.
+
+    Found by `router.test.ps1` on its first run, against the shipped router.
+  #>
+  param(
+    [Parameter(Mandatory)][AllowNull()]$Object,
+    [Parameter(Mandatory)][string]$Name
+  )
+  if ($null -eq $Object) { return $null }
+  $props = $Object.PSObject.Properties
+  if ($null -eq $props) { return $null }
+  $p = $props[$Name]
+  if ($null -eq $p) { return $null }
+  return $p.Value
+}
+
 function Get-RouterConfig {
   param([Parameter(Mandatory)][string]$InstallRoot)
   $path = Join-VaultPath -Root $InstallRoot -Parts @('automation', 'policies', 'provider-router.json')
@@ -121,36 +158,39 @@ function Test-ProviderUsable {
   )
 
   # 1 · THE GATE, FIRST. Governance before capability, always.
-  $accepts = if ($Provider.local -eq $true) { 'local_only' } else { 'hosted_allowed' }
+  $accepts = if ((Get-PropSafe $Provider 'local') -eq $true) { 'local_only' } else { 'hosted_allowed' }
   if (-not (Test-TierAllowed -SourceTier $Tier -DestinationAcceptsTier $accepts)) {
     return @{
       Usable = $false
       Status = 'excluded_tier'
-      Reason = "provider '$($Provider.id)' accepts $accepts; this content is $Tier. The gate refuses it - this is correct, not a failure."
+      Reason = "provider '$(Get-PropSafe $Provider 'id')' accepts $accepts; this content is $Tier. The gate refuses it - this is correct, not a failure."
     }
   }
 
   # 2 · policy exclusion - correct, and verbose
-  if ($Provider.enabled -eq $false) {
-    return @{ Usable = $false; Status = 'excluded_policy'; Reason = "provider '$($Provider.id)' is disabled in provider-router.json" }
+  $id = Get-PropSafe $Provider 'id'
+  if ((Get-PropSafe $Provider 'enabled') -eq $false) {
+    return @{ Usable = $false; Status = 'excluded_policy'; Reason = "provider '$id' is disabled in provider-router.json" }
   }
-  if ($Provider.excluded_tasks -and ($Provider.excluded_tasks -contains $Task)) {
-    return @{ Usable = $false; Status = 'excluded_policy'; Reason = "provider '$($Provider.id)' is excluded from task '$Task' by policy" }
+  $excludedTasks = Get-PropSafe $Provider 'excluded_tasks'
+  if ($excludedTasks -and ($excludedTasks -contains $Task)) {
+    return @{ Usable = $false; Status = 'excluded_policy'; Reason = "provider '$id' is excluded from task '$Task' by policy" }
   }
 
   # 3 · capability floor. NOT re-enterable by any fallback (D17).
-  if ($RequireReasoning -and ($Provider.reasoning_capable -ne $true)) {
-    return @{ Usable = $false; Status = 'excluded_capability'; Reason = "provider '$($Provider.id)' is not reasoning_capable and task '$Task' requires it" }
+  if ($RequireReasoning -and ((Get-PropSafe $Provider 'reasoning_capable') -ne $true)) {
+    return @{ Usable = $false; Status = 'excluded_capability'; Reason = "provider '$id' is not reasoning_capable and task '$Task' requires it" }
   }
 
   # 4 · is it actually configured? A missing key is a WARNING NAMING THE VARIABLE.
-  if ($Provider.key_env) {
-    if ($null -eq (Get-EnvSafe $Provider.key_env)) {
-      if (-not $script:WarnedVars.ContainsKey($Provider.key_env)) {
-        $script:WarnedVars[$Provider.key_env] = $true
-        Write-Warning "provider '$($Provider.id)' is not configured: set the environment variable $($Provider.key_env). It is being skipped, not silently dropped."
+  $keyEnv = Get-PropSafe $Provider 'key_env'
+  if ($keyEnv) {
+    if ($null -eq (Get-EnvSafe $keyEnv)) {
+      if (-not $script:WarnedVars.ContainsKey($keyEnv)) {
+        $script:WarnedVars[$keyEnv] = $true
+        Write-Warning "provider '$id' is not configured: set the environment variable $keyEnv. It is being skipped, not silently dropped."
       }
-      return @{ Usable = $false; Status = 'unconfigured'; Reason = "environment variable $($Provider.key_env) is not set" }
+      return @{ Usable = $false; Status = 'unconfigured'; Reason = "environment variable $keyEnv is not set" }
     }
   }
 
@@ -174,29 +214,30 @@ function Select-Provider {
     [Parameter(Mandatory)][string]$Task
   )
 
-  $taskCfg = $Config.tasks.$Task
-  $requireReasoning = ($null -ne $taskCfg -and $taskCfg.requires_reasoning -eq $true)
+  $taskCfg = Get-PropSafe (Get-PropSafe $Config 'tasks') $Task
+  $requireReasoning = ($null -ne $taskCfg -and (Get-PropSafe $taskCfg 'requires_reasoning') -eq $true)
 
   $chain = New-Object System.Collections.ArrayList
   $excluded = New-Object System.Collections.ArrayList
   $seenBaseUrls = @{}
 
-  foreach ($p in $Config.providers) {
+  foreach ($p in @(Get-PropSafe $Config 'providers')) {
     $check = Test-ProviderUsable -Provider $p -Tier $Tier -Task $Task -RequireReasoning:$requireReasoning
     if (-not $check.Usable) {
-      [void]$excluded.Add(@{ Id = $p.id; Status = $check.Status; Reason = $check.Reason })
+      [void]$excluded.Add(@{ Id = (Get-PropSafe $p 'id'); Status = $check.Status; Reason = $check.Reason })
       continue
     }
 
     # D16 - two providers resolving to the SAME upstream is not a chain, it is
     # one provider listed twice. Upstream, hops 1 and 2 of a four-hop chain
     # shared an endpoint and died together, and rotation looked like resilience.
-    $base = if ($p.base_url_env) { Get-EnvSafe $p.base_url_env } else { $p.base_url }
+    $baseEnv = Get-PropSafe $p 'base_url_env'
+    $base = if ($baseEnv) { Get-EnvSafe $baseEnv } else { Get-PropSafe $p 'base_url' }
     if ($base) {
       if ($seenBaseUrls.ContainsKey($base)) {
-        Write-Warning "providers '$($seenBaseUrls[$base])' and '$($p.id)' resolve to the SAME endpoint ($base). That is one provider listed twice, not a fallback chain - they will fail together."
+        Write-Warning "providers '$($seenBaseUrls[$base])' and '$(Get-PropSafe $p 'id')' resolve to the SAME endpoint ($base). That is one provider listed twice, not a fallback chain - they will fail together."
       } else {
-        $seenBaseUrls[$base] = $p.id
+        $seenBaseUrls[$base] = (Get-PropSafe $p 'id')
       }
     }
 

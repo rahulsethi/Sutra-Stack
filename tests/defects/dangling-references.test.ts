@@ -155,6 +155,65 @@ test("§9.1 · every file a remedy message tells you to edit exists", () => {
   );
 });
 
+test("§9.1 · every file a SOURCE COMMENT cites exists", () => {
+  // Added after this class bit twice in one module. `redact.ts` claimed to be
+  // the "TypeScript twin of `automation/scripts/lib/Redact.ps1`" with "the
+  // parity test as the contract", and separately cited
+  // `Get-SensitiveNumberPatterns` in `Classify.ps1`. NONE of the three existed.
+  //
+  // A citation to a file that is not there is worse than no citation: it
+  // asserts a check nobody runs, in the register a reader trusts most. The
+  // earlier version of this test scanned only `scripts/`, which is exactly why
+  // both survived a whole build.
+  const roots = ["packages/core/src", "packages/mcp/src", "packages/cli/src", "automation/scripts", "ee/src"];
+  const missing: string[] = [];
+
+  const walk = (abs: string): void => {
+    let entries;
+    try { entries = readdirSync(abs, { withFileTypes: true }); } catch { return; }
+    for (const e of entries) {
+      const p = join(abs, e.name);
+      if (e.isDirectory()) { walk(p); continue; }
+      if (!/\.(ts|mts|ps1)$/.test(e.name)) continue;
+
+      const text = readFileSync(p, "utf8");
+      for (const m of text.matchAll(
+        /`((?:packages|automation|scripts|tests|ee|vault-template|plugins)\/[\w./-]+\.(?:ts|mts|js|mjs|json|ps1|py|md))`/g,
+      )) {
+        const cited = m[1]!;
+        if (cited.includes("*")) continue;
+        if (!HAS_EE && cited.startsWith("ee/")) continue;
+        // VAULT-RELATIVE, or ASSERTED ABSENT. `redaction-aliases.json` is a list
+        // of real client names and `exposure-allowlist.json` names specific
+        // notes; both live in the USER's vault, and the leak scan's job is to
+        // assert they are not in THIS repo. Flagging them here would make the
+        // check wrong about its own subject, which is how a check gets deleted
+        // rather than fixed.
+        if (/^automation\/(config|policies\/exposure-)/.test(cited)) continue;
+        // A `.js` citation from TypeScript is an ESM import specifier for a
+        // `.ts` source — resolve it the way NodeNext does.
+        const candidates = [cited, cited.replace(/\.js$/, ".ts")];
+        if (candidates.some((c) => existsSync(join(ROOT, c)))) continue;
+        const entry = `${p.slice(ROOT.length + 1).replace(/\\/g, "/")} → ${cited}`;
+        if (!missing.includes(entry)) missing.push(entry);
+      }
+    }
+  };
+
+  for (const r of roots) {
+    const abs = join(ROOT, r);
+    if (existsSync(abs)) walk(abs);
+  }
+
+  assert.deepEqual(
+    missing,
+    [],
+    "A SOURCE COMMENT CITES A FILE THAT DOES NOT EXIST:\n" + missing.join("\n") +
+    "\n\nEither write it or stop citing it. A cited-but-absent twin implies a parity check that " +
+    "nobody is running, which is the most expensive kind of comment to be wrong.",
+  );
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 3 · The repo map in CLAUDE.md matches the tree
 // ─────────────────────────────────────────────────────────────────────────────

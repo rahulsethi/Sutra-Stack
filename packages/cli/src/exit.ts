@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
  * EXIT CODES ARE A GOVERNANCE SIGNAL — lifted verbatim from
- * `aatma/src/capabilities/executor.ts`.
+ * the CLI's contract with every caller.
  *
  * 00-MASTER-BUILD-BRIEF.md §5 is explicit: "Exit codes are a governance signal
  * — lift them verbatim." They are, byte for byte, because scripts and

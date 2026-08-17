@@ -10,7 +10,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { evaluate, effectiveCeiling, providerAllowed, narrowsOnly, type Subject, type Surface, type Purpose } from "./engine.js";
-import type { Tier } from "@sutra/core";
+import type { Tier } from "@sutra/aatma-core";
 
 const ALL: Tier[] = ["hosted_allowed", "review_required", "local_only"];
 

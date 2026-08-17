@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * The tier-model regression net. Lifted from `aatma/src/mcp/tier-alias.test.ts`
+ * AATMA · the tier-model regression net
  * and extended with the raise-only assertions that invariant I14 needs.
  */
 import { test } from "node:test";

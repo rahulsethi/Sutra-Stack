@@ -7,7 +7,7 @@
  * `exit.ts`.
  */
 
-import { listSkills, getSkill, runPwsh, flatArgs } from "@sutra/core";
+import { listSkills, getSkill, runPwsh, flatArgs } from "@sutra/aatma-core";
 import { parseArgs, flagBool, flagString, type ParsedArgs } from "./args.js";
 import { EXIT, EXIT_MEANING, SutraError, type ExitCode } from "./exit.js";
 import { say, emitJson, heading, table, fail, c, type OutputMode } from "./output.js";
@@ -17,6 +17,7 @@ import { cmdDoctor } from "./commands/doctor.js";
 import { cmdInit } from "./commands/init.js";
 import { cmdWire, cmdSchedule } from "./commands/wire.js";
 import { runPipelineVerb, cmdRescan, cmdLogs } from "./commands/pipeline.js";
+import { cmdProvider } from "./commands/provider.js";
 
 const VERSION = "1.0.0";
 
@@ -53,6 +54,7 @@ ${c.bold("The pipeline")}
 ${c.bold("Harnesses and scheduling")}
   sutra wire claude|hermes|codex [--exposure public|private|secret]
   sutra schedule install|list
+  sutra provider list|add|key <id>|test <id>    bring your own model
 
 ${c.bold("Skills")}
   sutra skills list | sutra run <id> [-- args]
@@ -102,6 +104,14 @@ export async function run(argv: readonly string[]): Promise<ExitCode> {
       case "schedule list":
       case "schedule run":
         return cmdSchedule(withSub(args, "schedule"), mode);
+      // BRING YOUR OWN MODEL. Grouped up here with the other setup verbs because
+      // it, like them, must work BEFORE there is a usable vault to read.
+      case "provider":
+      case "provider list":
+      case "provider add":
+      case "provider key":
+      case "provider test":
+        return await cmdProvider(withSub(args, "provider"), mode);
     }
 
     const ctx = makeContext(args, mode);
@@ -187,7 +197,7 @@ function cmdSkillsList(ctx: Ctx, args: ParsedArgs): ExitCode {
  * `sutra run <id> [-- args]`
  *
  * ── §9.7 · ONE FLAT INVOCATION ─────────────────────────────────────────────
- * `bun run aatma -- run <skill> -- args` silently dropped the arguments across
+ * A runner invoked as `<tool> -- run <skill> -- args` silently dropped the arguments across
  * THIRTEEN skills. Nothing errored. The skills ran with no input.
  *
  * So: one hop, `flatArgs` builds the vector explicitly, and `args.test.ts`

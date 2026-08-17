@@ -14,7 +14,7 @@ import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { createDispatcher, buildTools } from "./server.js";
-import { VaultClient, Brain, loadConfig, type SutraConfig } from "@sutra/core";
+import { VaultClient, Brain, loadConfig, type SutraConfig } from "@sutra/aatma-core";
 
 const EXPECTED_TOOLS = [
   "sutra_whoami",
@@ -129,10 +129,25 @@ test("the deprecated override_unlock tool is NOT present", () => {
   assert.ok(!names.some((n) => n.includes("override") || n.includes("unlock")));
 });
 
-test("no tool carries a legacy pre-rename name", () => {
+test("every tool is named for its TASK, not for the layer that implements it", () => {
+  // The tool surface is the one part of Sutra a model reads unaided, so it is
+  // named in the model's terms: `sutra_search`, `sutra_ask`, `sutra_get_note`.
+  //
+  // Aatma, Dimaag, Parvo and Hermes are the stack's internal layers. They are
+  // the right vocabulary for the architecture and the wrong vocabulary for a
+  // tool list — a model cannot infer that a `<layer>_search` tool searches notes,
+  // and a tool it misunderstands is a tool it uses wrongly or not at all.
+  //
+  // The layer name is spelled `<layer>` rather than literally here on purpose:
+  // the leak scan forbids a layer-prefixed tool identifier anywhere in the tree,
+  // and it is right to. Writing the forbidden literal into the comment that
+  // explains the ban is how a scanner ends up flagging its own rationale.
   for (const t of toolsAt(fixtureVault(), "hosted_allowed")) {
     assert.ok(t.def.name.startsWith("sutra_"), `${t.def.name} is not namespaced`);
-    assert.ok(!/dimaag|aatma|parvo/i.test(t.def.name));
+    assert.ok(
+      !/dimaag|aatma|parvo|hermes/i.test(t.def.name),
+      `${t.def.name} is named after an internal layer rather than the task it performs`,
+    );
   }
 });
 

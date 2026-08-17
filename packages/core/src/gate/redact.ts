@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
  * Egress redaction — third-party-name aliasing + sensitive-number masking.
- * Lifted from `aatma/src/mcp/redact.ts`.
+ * AATMA · the last stop before egress.
  *
- * TypeScript twin of `automation/scripts/lib/Redact.ps1`. The two must produce
- * IDENTICAL output for identical input; the parity test is the contract.
+ * ── THERE IS NO POWERSHELL TWIN OF THIS MODULE ─────────────────────────────
+ * This header used to claim one — "TypeScript twin of `Redact.ps1`… the parity
+ * test is the contract" — and neither the file nor the test has ever existed.
+ * That is worse than saying nothing: it asserts a check nobody runs, in the
+ * exact register a reader trusts. E1's rule is one policy engine and N thin
+ * bindings; redaction has ONE binding, because egress happens on one path.
+ *
+ * The PS side classifies and floors. It does not redact for egress.
  *
  * ── SHIPS EMPTY, AND THAT IS THE POINT ─────────────────────────────────────
  * The alias map is a list of real third-party names. In the system this was
@@ -122,23 +128,55 @@ function buildRegex(
 interface MaskPattern {
   name: string;
   pattern: RegExp;
+  /**
+   * Which character positions the "keep the last four" rule counts.
+   *
+   * `digits` (the default) is right whenever the match carries surrounding
+   * words — `bank-account-long` matches its own `account no:` label, and
+   * counting letters there would mask the label into `XXXXXXX`.
+   *
+   * `alnum` is required for an identifier that is INHERENTLY MIXED. A PAN is
+   * `AAAAA9999A`: exactly four digits, so under the digit rule "keep the last
+   * four" keeps ALL of them and the pattern masks nothing at all. It matched,
+   * it looked live, and it was a no-op — found by the positive-coverage test
+   * below, which is the only reason anyone knows.
+   */
+  unit?: "digits" | "alnum";
 }
 
 /**
- * Maskable sensitive-number shapes. Mirrors `Get-SensitiveNumberPatterns`
- * (Maskable=true) in `Classify.ps1`, IN THE SAME ORDER — first pattern wins on
- * overlap, so government IDs must precede the generic long-digit catch-all or
- * a PAN would be masked by the wrong rule and the two implementations would
- * diverge on output.
+ * Maskable sensitive-number shapes, IN PRIORITY ORDER — first pattern wins on
+ * overlap, so government IDs must precede the generic long-digit catch-all or a
+ * PAN would be masked by the wrong rule.
+ *
+ * There is no PowerShell twin of this function. The pipeline's PS side
+ * classifies and floors; it does not mask for egress, and `Protect-MatchedSecret`
+ * in `Classify.ps1` is a LOG redactor for a finding, not this. Egress masking
+ * happens on the one path that performs egress, which is TypeScript. (An earlier
+ * comment here claimed a parity contract with `Get-SensitiveNumberPatterns` /
+ * `Mask-SensitiveNumbers` — neither has ever existed. A cited twin that is
+ * absent is worse than none, because it implies a check nobody is running.)
  */
 const MASK_PATTERNS: MaskPattern[] = [
-  { name: "pan-india", pattern: /(?<![A-Z0-9])[A-Z]{5}\d{4}[A-Z](?![A-Z0-9])/g },
-  { name: "aadhaar", pattern: /(?<!\d)\d{4}[\s-]?\d{4}[\s-]?\d{4}(?!\d)/g },
+  { name: "pan-india", pattern: /(?<![A-Z0-9])[A-Z]{5}\d{4}[A-Z](?![A-Z0-9])/g, unit: "alnum" },
   { name: "passport", pattern: /(?<![A-Z0-9])[A-Z][1-9]\d{7}(?![A-Z0-9])/g },
+  // ── LONGEST DIGIT RUNS FIRST ────────────────────────────────────────────
+  // `credit-card` (16 digits) MUST precede `aadhaar` (12). It did not, and the
+  // consequence was not a missed match — it was a HALF-MASKED CARD.
+  //
+  // On `4539 5678 9012 3456`, aadhaar matched the first twelve digits (its
+  // trailing `(?!\d)` is satisfied by the space), masked those, and left the
+  // final group untouched: `XXXX XXXX 9012 3456`. Eight digits published
+  // instead of four, on the one shape in this list with immediate cash value,
+  // and the output still LOOKS correctly masked — which is why nothing noticed.
+  //
+  // `credit-card` requires exactly 16 digits and aadhaar exactly 12, so putting
+  // the longer first cannot starve the shorter.
   {
     name: "credit-card",
     pattern: /(?<!\d)(?:4\d{3}|5[1-5]\d{2}|3[47]\d{2}|6(?:011|5\d{2}))[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}(?!\d)/gi,
   },
+  { name: "aadhaar", pattern: /(?<!\d)\d{4}[\s-]?\d{4}[\s-]?\d{4}(?!\d)/g },
   { name: "iban", pattern: /(?<![A-Z0-9])[A-Z]{2}\d{2}[A-Z0-9]{4}\d{7,}(?![A-Z0-9])/g },
   {
     name: "bank-account-long",
@@ -149,34 +187,35 @@ const MASK_PATTERNS: MaskPattern[] = [
 ];
 
 /**
- * Mask sensitive number shapes for egress. The last four digit POSITIONS are
+ * Mask sensitive number shapes for egress. The last four COUNTED POSITIONS are
  * kept (enough to recognise your own card); everything before becomes `X`.
  * Separators pass through unchanged, so the shape stays readable.
  *
- * Never throws. PowerShell twin: `Mask-SensitiveNumbers` in `Classify.ps1`.
+ * What counts is per-pattern — see `MaskPattern.unit`. Never throws.
  */
 export function maskSensitiveNumbers(text: string): string {
   if (!text) return text;
   let result = text;
 
-  for (const { pattern } of MASK_PATTERNS) {
+  for (const { pattern, unit } of MASK_PATTERNS) {
+    const counts =
+      unit === "alnum"
+        ? (c: string) => /[A-Za-z0-9]/.test(c)
+        : (c: string) => c >= "0" && c <= "9";
+
     pattern.lastIndex = 0;
     result = result.replace(pattern, (match: string) => {
-      const digitPositions: number[] = [];
-      for (let i = 0; i < match.length; i++) {
-        const c = match[i]!;
-        if (c >= "0" && c <= "9") digitPositions.push(i);
-      }
-      if (digitPositions.length <= 4) return match;
+      let total = 0;
+      for (const c of match) if (counts(c)) total++;
+      if (total <= 4) return match;
 
-      const keepFrom = digitPositions.length - 4;
+      const keepFrom = total - 4;
       let out = "";
-      let dCount = 0;
-      for (let i = 0; i < match.length; i++) {
-        const c = match[i]!;
-        if (c >= "0" && c <= "9") {
-          out += dCount < keepFrom ? "X" : c;
-          dCount++;
+      let seen = 0;
+      for (const c of match) {
+        if (counts(c)) {
+          out += seen < keepFrom ? "X" : c;
+          seen++;
         } else {
           out += c;
         }
@@ -187,6 +226,32 @@ export function maskSensitiveNumbers(text: string): string {
   }
   return result;
 }
+
+/**
+ * Every maskable shape with a fixture it MUST visibly change.
+ *
+ * "Assert positive coverage on every guard": a mask pattern that matches and
+ * then returns its input is indistinguishable from one protecting clean text.
+ * `pan-india` was exactly that — live-looking and inert — until this list
+ * existed. Adding a pattern above without adding a fixture here fails CI.
+ */
+export const MASK_FIXTURES: ReadonlyArray<{ name: string; input: string }> = [
+  { name: "pan-india", input: "PAN ABCDE1234F on file" },
+  { name: "aadhaar", input: "uid 1234 5678 9012" },
+  // 8 digits: `[A-Z]` `[1-9]` `\d{7}`. It was written with 7 the first time —
+  // the same one-character-short mistake the pattern set's own fixtures made
+  // three times, and caught the same way, which is the argument for this list.
+  { name: "passport", input: "passport M12345678 issued" },
+  // Deliberately NOT an all-1s test card: repeated digits make a partial
+  // mask indistinguishable from a complete one.
+  { name: "credit-card", input: "card 4539 5678 9012 3456" },
+  { name: "iban", input: "IBAN GB29NWBK60161331926819" },
+  { name: "bank-account-long", input: "account no: 123456789012" },
+  { name: "unlabelled-long-digits", input: "ref 98765432109876" },
+];
+
+/** The pattern names, for the coverage test. */
+export const MASK_PATTERN_NAMES: readonly string[] = MASK_PATTERNS.map((p) => p.name);
 
 /**
  * Apply the alias map, then mask sensitive numbers. Order matters: aliasing

@@ -1,202 +1,248 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-# Sutra
 
-**A governed knowledge substrate for your AI.**
+# Sutra Stack
 
-Your notes stay plain markdown in a git repo you own. Every note carries a
-sensitivity tier. A gate sits between those notes and every model — and the
-model cannot lift it.
+**Your AI can reason over everything you know, and provably cannot leak what you
+marked private.**
 
-The claim is not "another note app". It is:
+Sutra is a governed knowledge substrate. Your notes are plain markdown in a git
+repository you own. Every note carries a sensitivity tier. A deterministic
+pipeline turns captures into durable, linked, searchable knowledge — and a
+server-side **gate** sits between that knowledge and every AI model.
 
-> **Your AI can reason over everything you know, and provably cannot leak what
-> you marked private.**
+The model cannot lift the gate. Not with a clever prompt, not with a tool
+argument, not by accident.
 
-And "provably" means one command:
+One command shows you exactly what any given model can see:
 
-```
+```console
 $ sutra gate
-
-Ceiling: public
-  local terminal, no model in the loop
-
-  Visible:  812 of 1262 notes
-  Withheld: private 401 · secret 37 · do_not_learn 12
+  Ceiling: public.  Visible: 812.
+  Withheld — private: 401, secret: 37, do_not_learn: 12.
 ```
 
 ---
 
-## Start here
+## The four layers
 
-You need **Node ≥ 20**, **git**, and **PowerShell 7** (`pwsh` — it is
-cross-platform; Windows PowerShell 5.1 is not a substitute).
+| Layer | What it owns | Package |
+|---|---|---|
+| **Aatma** — governance & identity | tiers · the gate · exposure ceilings · redaction · audit | `@sutra/aatma-core` |
+| **Dimaag** — knowledge substrate | ingest · classify · compile · graph · retrieval | `@sutra/aatma-core` + `automation/` |
+| **Parvo** — persona & routing | identity bundle · turn routing · prompt assembly | `@sutra/aatma-core` |
+| **Hermes** — integration surface | MCP server · CLI · optional daemon & dashboard | `@sutra/hermes-mcp`, `@sutra/cli` |
+
+```
+                        ┌──────────────────────────────────┐
+   your editor ───────► │  your vault: plain .md + git     │  ← the only truth
+   your phone  ───────► │  every note has a sensitivity    │
+                        └───────────────┬──────────────────┘
+                                        │
+                          DIMAAG · ingest → classify → compile
+                                    → graph → index
+                                        │
+                        ┌───────────────▼──────────────────┐
+                        │  AATMA · THE GATE                │
+                        │  ceiling read at startup,        │
+                        │  never from a tool argument      │
+                        └───────────────┬──────────────────┘
+                                        │
+                   PARVO · persona + which model may serve this turn
+                                        │
+                        ┌───────────────▼──────────────────┐
+                        │  HERMES · MCP · CLI · daemon     │
+                        └───────────────┬──────────────────┘
+                                        │
+                Claude Code · Codex · your own client · a local model
+```
+
+Everything below the vault is **derived and disposable**. Delete the caches, the
+index and the graph; `sutra daily` rebuilds them. Your notes are never
+at risk from a rebuild.
+
+---
+
+## Install
+
+**Requirements** — all free, all cross-platform:
+
+| | Needed for | Check |
+|---|---|---|
+| **Node.js 20+** | the core, MCP server and CLI | `node --version` |
+| **PowerShell 7+** (`pwsh`) | the pipeline | `pwsh --version` |
+| **git** | the vault's history | `git --version` |
+| *(optional)* **Ollama** | local model answers | `ollama --version` |
+| *(optional)* **uv** | HTML/PDF extraction | `uv --version` |
+
+PowerShell 7 is not Windows-only and is not Windows PowerShell 5. Get it from
+<https://aka.ms/powershell> — it runs on macOS and Linux too.
 
 ```sh
-git clone https://github.com/rahulsethi/Sutra-Stack.git sutra
-cd sutra
+git clone https://github.com/rahulsethi/Sutra-Stack.git
+cd Sutra-Stack
+
 npm install
 npm run build
-node packages/cli/dist/bin.js init
+
+# Install the git hooks in your clone (one time)
+git config core.hooksPath .githooks
+
+# Confirm the build is sound before you trust it with anything
+npm run verify
 ```
 
-`sutra init` asks at most seven questions and ends by **proving the claim**: it
-captures something, asks about it, and shows you the same question answered from
-your terminal and from a cloud assistant's ceiling — with the secret note
-provably withheld from the second.
-
-It is idempotent. Re-run it any time.
-
-> **No API key is required, and none is asked for.** With no model configured at
-> all, Sutra does retrieval, tiering, linking, the graph, and **cited answers**.
-> A model adds prose synthesis on top of those — nothing else. See
-> [Why it works with no key](#why-it-works-with-no-key).
-
----
-
-## What you get
+Then create your vault:
 
 ```sh
-sutra ask "what did I decide about the migration?"   # a cited answer from your own notes
-sutra gate                                            # what can your AI actually see?
-sutra capture "worth remembering"                     # floored to private, always
-sutra doctor                                          # prereqs, wiring, and a live gate self-test
+node packages/cli/dist/bin.js init ~/sutra-vault
 ```
 
-Every read command supports `--json`. Exit codes are a governance signal, not a
-convention: `sutra help exit-codes`.
+`sutra init` is interactive, creates nothing outside the directory you name, and
+finishes by printing the gate summary above — so the first thing you see is proof
+the gate works.
 
-### Three shapes — pick one
-
-| | What it is | Prereqs | Setup |
-|---|---|---|---|
-| **(a) CLI only** | `sutra` + your vault + the pipeline. No daemon, no harness, **no accounts, no keys, no network**. | Node, git, pwsh | ~5 min |
-| **(b) Plugin into a harness** ⭐ | (a) + the MCP server wired into Claude Code, Hermes or Codex. The harness brings the model, keys, chat and scheduling. | (a) + a harness | +2 min |
-| **(c) Full stack** | (b) + a local daemon and dashboard: graph explorer, review queue, secret reveal. | (b) + a port | +15 min |
-
-**The gate is identical in all three.** Only the ceiling differs.
+**Full walkthrough:** [`ONBOARDING.md`](ONBOARDING.md) — every step, every
+dependency, what to do when one is missing, and how to verify each stage actually
+ran. [`ONBOARDING-ENTERPRISE.md`](ONBOARDING-ENTERPRISE.md) covers policy
+bundles, signed audit chains and multi-user deployment.
 
 ---
 
-## The three tiers
+## Use it
 
-| Tier | Your AI sees it | Use it for |
+```sh
+sutra                       # what you can do
+sutra gate                  # what a model can see, right now
+sutra search "kafka"        # keyword search, gated
+sutra ask "how do I ...?"   # cited answer, gated
+sutra capture "a thought"   # write to the inbox, floored to private
+sutra daily                 # ingest → compile → graph → index
+sutra doctor                # is everything actually wired?
+sutra provider list         # your models, and whose key is missing
+sutra schedule list         # what runs on its own
+```
+
+Every read command takes `--json`. Exit codes are governance signals, not just
+success/failure — see [`packages/cli/src/exit.ts`](packages/cli/src/exit.ts).
+
+### Bring your own model
+
+Any OpenAI-compatible endpoint — a commercial API, a company gateway, LM Studio,
+vLLM, or Ollama locally.
+
+```sh
+sutra provider add --id my-gateway --base-url https://llm.example.com/v1                    --key-env MY_GATEWAY_API_KEY --model gpt-4o-mini
+sutra provider key my-gateway     # how to set the key, for your platform
+sutra provider test my-gateway    # reachable? credential accepted?
+```
+
+**Sutra never stores your API key** — the config records the *name* of an
+environment variable, never its value. Each surface can carry its own key *and*
+its own ceiling, so a hosted model can serve one harness at `public` while a
+local model serves another at `private`, on the same vault.
+
+A hosted provider is structurally ineligible for `private` and `secret` content.
+Adding one cannot widen your exposure.
+
+### Connect it to your AI
+
+```sh
+sutra wire claude           # or: hermes, codex
+sutra doctor --harness claude
+```
+
+`sutra wire` registers the MCP server with your harness. `sutra doctor` then
+speaks the protocol and asserts the tool count and the ceiling — because a
+config file existing proves nothing about whether the harness reads it.
+
+---
+
+## The sensitivity model
+
+Three tiers, plus one orthogonal flag.
+
+| Tier | Meaning | Reaches a hosted model? |
 |---|---|---|
-| `public` | yes, including a cloud model | reference, notes you would publish |
-| `private` | **no** — unless you release one note, temporarily | the default. Most of your vault. |
-| `secret` | **never. At any ceiling. Under any flag.** | credentials, health, finance, ID |
+| `public` | safe to send anywhere | yes |
+| `private` | **the default for anything unlabelled** | only if the ceiling allows |
+| `secret` | never leaves this machine | **never** |
+| `do_not_learn` | excluded from every model, at every tier | never |
 
-**Anything unlabelled is `private`.** That default is load-bearing: an
-unlabelled note is not one you decided was safe to share — it is one nobody has
-looked at yet.
+Four rules make this hold:
 
-There is a fourth, orthogonal marking: `do_not_learn: true` excludes a note from
-every model surface *even at `public`*. Use it for someone else's words, a draft
-you have not stood behind, a thing you are still deciding about.
+1. **The ceiling is server-side.** Read from the environment at server startup.
+   No tool accepts a tier, ceiling, exposure or override argument — the build
+   fails if one ever appears.
+2. **The secret floor is absolute.** `secret` content reaches no model, hosted or
+   local. Four independent enforcement points, no override, no flag.
+3. **Sensitivity only ever rises.** Classification sets a floor; nothing lowers
+   a tier.
+4. **Unlabelled means private.** Forgetting to classify is safe by default.
+
+Anything withheld is **counted and named in the response**, never silently
+dropped — so you always know when the answer you got was partial.
 
 ---
 
-## Wire it into your assistant
+## Local-first, cloud when you choose
+
+The default topology is entirely on your machine. Nothing needs an account, an
+API key or a network connection to work.
+
+| Component | Default | Cloud option |
+|---|---|---|
+| Vault | your disk | your own private git remote |
+| Pipeline | local `pwsh` | a self-hosted runner |
+| MCP server | local stdio | — stays local, by design |
+| Model | Ollama, or none at all | a hosted API, **public tier only** |
+| Graph & index | local files | — |
+
+With no model configured at all, retrieval, tiering, linking, the graph and
+cited answers still work. A model adds prose synthesis on top and nothing else.
+
+`secret` content never leaves the machine on any topology. That is not a
+configuration setting.
+
+See [`DEPLOYMENT.md`](DEPLOYMENT.md) for node placement, tier-partitioned
+topologies, and what each option costs you.
+
+---
+
+## Extend it
+
+Sutra exposes one surface — MCP — and everything plugs into that.
 
 ```sh
-sutra wire claude --exposure public     # or: hermes, codex
-sutra doctor --harness claude           # must report 14 tools at ceiling "public"
+plugins/claude-code/    # Claude Code
+plugins/codex/          # Codex
+plugins/hermes/         # Hermes
 ```
 
-That second command is not ceremony. It **speaks the MCP protocol** and asserts
-the tool count *and* the ceiling, because a harness upgrade once stopped reading
-the block that registered this server and left the tool list **empty**, with no
-error at all. Every file was present and correct. Re-run it after every harness
-upgrade.
-
-Your assistant then has 14 tools over your notes. Ask it *"what can you see?"* —
-it will tell you the exact counts.
+Adding a new surface means adding a client of the MCP server, never a second
+copy of the gate. [`DEPLOYMENT.md`](DEPLOYMENT.md#extending-with-a-new-surface)
+walks through building one, including chat surfaces such as Telegram or Slack,
+and the two rules any new surface has to satisfy.
 
 ---
 
-## Why it works with no key
+## Observability
 
-A fresh install with no API key returns a **grounded, cited answer**: the
-relevant passages from your own notes, each labelled with its source and tier,
-in relevance order, with the withheld count stated.
+You should never have to trust that Sutra is working.
 
-That is not a placeholder for a real answer. Every claim in it is traceable by
-construction, because every line came from a file whose path is printed next to
-it — a property a synthesised paragraph can only approximate. It is returned
-even when a model *did* run.
+```sh
+sutra doctor            # every component: wired, degraded, or broken
+sutra gate              # what a model can see, and what is withheld, by tier
+sutra status            # vault and pipeline health, including the last run
+sutra logs --since 7    # what actually happened, with reasons
+```
 
-Adding a model adds prose synthesis over those same sources. It does not add
-retrieval, tiering, linking, citation or the graph, because those never needed
-one.
+Every stage reports one of six distinct outcomes — `ok`, `degraded`, `failed`,
+`skipped (no input)`, `skipped (policy)`, `no-op` — and they never share a
+counter. A run that considered 400 notes and produced nothing reports `no-op`,
+not success.
 
----
-
-## Why you might trust it
-
-The honest answer is: **read the gate.** It is about 600 lines, in
-`packages/core/src/gate/`, with one runtime dependency. The MCP server has
-**zero**. A supply chain is a poor foundation for a claim about what your AI can
-see, so there mostly isn't one.
-
-The gate is enforced at **four independent points**, and they are deliberately
-redundant: each has failed independently in the system Sutra was extracted from,
-and the other three held.
-
-Nothing in this repo takes a ceiling as an argument. No tool accepts a tier, a
-scope, an override or a passphrase — and a test walks every published tool
-schema on every build to keep it that way. The exposure ceiling is read from the
-environment once, at server startup.
-
-See [`docs/diagrams/gate.html`](docs/diagrams/gate.html) for the picture.
-
----
-
-## Built from a post-mortem
-
-Sutra is an *extraction* from a live personal system, and that system had a bad
-year. It was audited exhaustively, and the audit is a shipped document:
-**[`INHERITED-DEFECTS.md`](INHERITED-DEFECTS.md)** — 39 defects, each with a
-named test that must **fail against a deliberately planted instance** before it
-counts as fixed.
-
-A few, so you know what kind of document it is:
-
-- One line truncated every source to 6,000 characters before synthesis. It
-  produced **424 pages that were confident, fluent, correctly formatted, and
-  wrong in specifics** — and page length was flat across two orders of magnitude
-  of source size, so nothing looked anomalous.
-- A secret-detection rule, `sk-[A-Za-z0-9]{20,}`, could not match `sk-proj-` or
-  `sk-ant-`: the hyphen ends the character run after three characters. The
-  flagship key shapes were **structurally unmatchable**, and the tests written
-  from the same mental model passed.
-- One of three secret-floor layers had **never once fired** — it matched
-  `identity/accounts` against a numbered vault, so no real path could match it.
-  Nothing counted rule hits, and a rule that fires zero times looks exactly like
-  a rule protecting a clean corpus.
-- A pre-commit hook lived untracked in `.git/hooks/` and took ten minutes on a
-  large commit, so `--no-verify` became standing policy: **128 occurrences
-  across 91 files** — while the repo kept the *belief* that its commits were
-  scanned.
-
-Every one of those is a design decision here, and the reasoning is in the code
-next to the thing it explains.
-
-The rule that produced all of them: **write the test before you believe the
-fix.** During this build, the positive-coverage test caught three detection
-rules whose fixtures were one character short of their own patterns — dead rules
-that would have looked exactly like rules protecting a clean corpus.
-
----
-
-## Documentation
-
-| | |
-|---|---|
-| [`Master_documentation/00-START-HERE.md`](Master_documentation/00-START-HERE.md) | the canonical doc set |
-| [`docs/diagrams/`](docs/diagrams/index.html) | six dark, interactive views. They render offline. |
-| [`CLAUDE.md`](CLAUDE.md) | instructions for an AI working **on** this codebase |
-| [`AGENTS.md`](AGENTS.md) | instructions for an AI working **with** a user's vault |
-| [`INHERITED-DEFECTS.md`](INHERITED-DEFECTS.md) | the post-mortem, shipped as a product document |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | the CLA, and the testing discipline |
+Every run appends one row to a CSV, from the first day. Every gate refusal is
+audited with counts and paths, never content.
 
 ---
 
@@ -204,27 +250,22 @@ that would have looked exactly like rules protecting a clean corpus.
 
 | Path | Licence |
 |---|---|
-| everything except `ee/` | **Apache-2.0** |
-| [`ee/`](ee/) | commercial — **not** open source. See [`ee/LICENSE`](ee/LICENSE). |
+| everything except `ee/` | Apache-2.0 |
+| `ee/` | commercial — see [`ee/LICENSE`](ee/LICENSE) |
 
-**`rm -rf ee/` leaves a complete, fully-tested, Apache-2.0 product.** CI proves
-it on every commit by deleting the subtree, rebuilding, and running the entire
-suite. Core never imports from `ee/`.
+`ee/` can only ever **narrow** access, never widen it, and that is asserted over
+the full cross-product on every build. Delete `ee/` and you have a complete,
+working, Apache-2.0 product — CI proves it on every commit.
 
-Everything in `ee/` can only *narrow* access, never widen it — asserted over the
-full cross-product on every build. That property is what lets a security review
-reduce to "read Core's gate".
+Contributions welcome under the CLA: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ---
 
-## Status
+## For engineers
 
-**v1.0 — local, single-user, free, open.**
-
-Not in v1: multi-user, RBAC, SSO, sync, sharing, an admin console, or anything
-requiring a paid account. Those are [`ee/`](ee/README.md) and they are a
-different product.
-
-Contributions welcome — please read [`CONTRIBUTING.md`](CONTRIBUTING.md) first,
-particularly the CLA and the note about writing the test before believing the
-fix.
+- [`CLAUDE.md`](CLAUDE.md) — the invariants, and the rules for changing this code
+- [`AGENTS.md`](AGENTS.md) — for an assistant working *with* a user's vault
+- [`DEPLOYMENT.md`](DEPLOYMENT.md) — topology, nodes, hosting, extension surfaces
+- [`RELEASE.md`](RELEASE.md) — release cycle, edition separation, packaging, launch
+- [`Master_documentation/`](Master_documentation/00-START-HERE.md) — architecture, mechanisms, decisions
+- [`docs/diagrams/`](docs/diagrams/index.html) — the gate, the pipeline, the MCP surface

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * THE GATE. Lifted from `aatma/src/sensitivity-guard.ts`.
+ * THE GATE — the enforcement point of AATMA, Sutra's governance and identity
+ * core. Every egress decision in the stack resolves here.
  *
  * This is the smallest and most important file in the product. Everything Sutra
  * claims rests on the comparison in `sensitivityGuard`:

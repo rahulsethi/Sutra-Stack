@@ -58,19 +58,16 @@ jobs:
       - run: npm test
 
       # PowerShell 7 is preinstalled on every GitHub runner as `pwsh`.
+      #
+      # DISCOVERED, NOT LISTED. This step used to name two files. Four more
+      # `*.test.ps1` suites were then written and none of them ran here — the job
+      # stayed green over steadily less, which is "created ≠ wired" wearing a
+      # green check mark. `run-ps-tests.mjs` globs the tree, refuses to pass on an
+      # empty set, and FAILS rather than skips when `pwsh` is absent: the
+      # classifier-parity assertion is not optional, because E1 exists precisely
+      # because a divergence between the two bindings fails open in one of them.
       - name: PowerShell suite (incl. the PS/TS classifier parity)
-        shell: pwsh
-        run: |
-          $fail = 0
-          foreach ($t in @(
-            'automation/scripts/lib/Classify.test.ps1',
-            'automation/scripts/lib/Frontmatter.test.ps1'
-          )) {
-            Write-Host "== $t =="
-            pwsh -NoProfile -File $t
-            if ($LASTEXITCODE -ne 0) { $fail = 1 }
-          }
-          exit $fail
+        run: npm run test:ps
 
   # ══════════════════════════════════════════════════════════════════════════
   # RELEASE GATE · the licence boundary

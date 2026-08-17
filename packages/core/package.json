@@ -1,7 +1,7 @@
 {
-  "name": "@sutra/core",
+  "name": "@sutra/aatma-core",
   "version": "1.0.0",
-  "description": "The Sutra governance core — tier model, exposure gate, redaction, override, floored write, audit. One dependency.",
+  "description": "AATMA \u2014 the governance and identity core. Tier model, exposure gate, redaction, override, floored write, audit. ONE dependency.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -13,7 +13,10 @@
     "./retrieval": "./dist/retrieval/index.js",
     "./run": "./dist/run/index.js"
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "engines": {
     "node": ">=20"
   },
@@ -23,5 +26,9 @@
   "scripts": {
     "build": "tsc --build",
     "test": "node --test dist"
+  },
+  "sutra": {
+    "layer": "aatma",
+    "formerName": "@sutra/core"
   }
 }

@@ -158,9 +158,19 @@ test("the prompt is DETERMINISTIC — identical input, byte-identical output", (
 });
 
 test("§8 · the shipped prompt carries no personal identifier", () => {
-  // The upstream version hardcoded one person's name and one assistant's name.
+  // The generic prompt must name NOBODY. Identity comes from the user's own
+  // vault at runtime, never from a literal in this file.
+  //
+  // Note what is NOT on this list any more: Parvo, Dimaag and Aatma. They were
+  // here when they were internal codenames; they are now the stack's own layer
+  // names, and a layer name is not a personal identifier. What is forbidden is a
+  // PERSON, and one hardcoded name is what this test was written for.
   const empty = assemblePersonaPrompt({ principal: null, persona: null, telos: null, withheld: [] });
-  for (const name of ["Rahul", "Parvo", "Dimaag", "Aatma"]) {
+  for (const name of ["Rahul", "Sethi"]) {
     assert.ok(!empty.includes(name), `the generic prompt contains "${name}"`);
   }
+
+  // …and it does not invent an assistant identity either. A default persona is a
+  // persona the user did not choose.
+  assert.ok(!/my name is|I am called/i.test(empty), "the generic prompt names the assistant");
 });

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * The audit trail — ported from `aatma/src/observability.ts`, plus rotation.
+ * AATMA · the audit trail. Invariant 7 — "reversible-auto with an audit trail"
+ * — is only true because this file is.
  *
  * ── INVARIANT 7 · Reversible-auto with an audit trail ──────────────────────
  * Automated maintenance may act WITHOUT ASKING — precisely BECAUSE every action

@@ -39,7 +39,7 @@
  * divergence fails open in at least one of them".
  *
  * So this engine does not re-implement the comparison. It IMPORTS
- * `sensitivityGuard`, `TIER_RANK` and `isDoNotLearn` from `@sutra/core` and
+ * `sensitivityGuard`, `TIER_RANK` and `isDoNotLearn` from `@sutra/aatma-core` and
  * composes them. One policy engine, one predicate, N thin bindings — and the
  * enterprise engine is one of the bindings, not a seventh implementation.
  */
@@ -51,7 +51,7 @@ import {
   coerceTier,
   sensitivityGuard,
   isSecretFloor,
-} from "@sutra/core";
+} from "@sutra/aatma-core";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // E2 · Identity

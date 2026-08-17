@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Hybrid retrieval — lifted from `aatma/src/mcp/hybrid.ts`.
+ * DIMAAG · hybrid retrieval.
  *
  * Fuses the VECTOR ranking (cosine over the local embedding index) with the
  * BM25 ranking via Reciprocal-Rank Fusion, plus a light recency tie-break, an

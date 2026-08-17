@@ -32,7 +32,7 @@ import {
   loadConfig, VaultClient, Brain, findPwsh, resolveUv, loadPatternSet, selfTestPatterns,
   classify, rescanRequired, loadGraph, verifyHeader, indexAgeHours, staleRunAlert,
   providerHealth, providerAlerts, listSkills, TIER_DISPLAY, type Tier,
-} from "@sutra/core";
+} from "@sutra/aatma-core";
 import { EXIT, type ExitCode } from "../exit.js";
 import { say, emitJson, heading, check, warn, c, type OutputMode } from "../output.js";
 import { flagString, flagBool, type ParsedArgs } from "../args.js";

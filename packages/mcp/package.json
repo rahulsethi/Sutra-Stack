@@ -1,7 +1,7 @@
 {
-  "name": "@sutra/mcp",
+  "name": "@sutra/hermes-mcp",
   "version": "1.0.0",
-  "description": "Sutra MCP server — stdio JSON-RPC 2.0, 14 gated tools. Hand-rolled protocol, zero external dependencies.",
+  "description": "HERMES \u2014 the integration surface. stdio JSON-RPC 2.0, 14 gated tools. Hand-rolled protocol, ZERO external dependencies.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/server.js",
@@ -9,15 +9,22 @@
   "bin": {
     "sutra-mcp": "./dist/bin.js"
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
-    "@sutra/core": "1.0.0"
+    "@sutra/aatma-core": "1.0.0"
   },
   "scripts": {
     "build": "tsc --build",
     "test": "node --test dist"
+  },
+  "sutra": {
+    "layer": "hermes",
+    "formerName": "@sutra/mcp"
   }
 }

@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 <#
 .SYNOPSIS
-  Frontmatter and note I/O. Lifted from `automation/scripts/lib/Frontmatter.ps1`.
+  DIMAAG - frontmatter and note I/O. The pipeline's only reader and writer of a
+  note's metadata block.
 
 .DESCRIPTION
   Dependency-free, BOM-tolerant, UTF-8-no-BOM writes.

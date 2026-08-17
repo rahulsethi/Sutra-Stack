@@ -20,7 +20,7 @@
  * touched a disk.
  */
 
-import type { Tier } from "@sutra/core";
+import type { Tier } from "@sutra/aatma-core";
 
 export interface KeyProvider {
   kind: "kms" | "hsm" | "vault" | "env";

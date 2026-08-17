@@ -232,7 +232,7 @@ emit({
   ].join("\n      "),
   cards: [
     card("emerald", "One dependency", [
-      "<code>@sutra/core</code>: one (<code>gray-matter</code>, MIT). <code>@sutra/mcp</code>: zero.",
+      "<code>@sutra/aatma-core</code>: one (<code>gray-matter</code>, MIT). <code>@sutra/hermes-mcp</code>: zero.",
       "That is the auditability claim expressed as a number — <strong>the thing deciding what your AI can see is readable in an afternoon</strong>.",
       "<code>ee/src/supply/sbom.ts</code> enforces the ceiling, so raising it is a decision rather than an accident.",
     ]),

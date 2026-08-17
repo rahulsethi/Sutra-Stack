@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * THE GATED CORPUS — lifted from `aatma/src/mcp/brain.ts`.
+ * DIMAAG · THE GATED CORPUS. The knowledge substrate a model is allowed to see,
+ * with AATMA's gate applied on every read.
  *
  * Every read path in the product goes through this class, and `visible()` is
  * the second of the four secret-floor enforcement points. If a note is not

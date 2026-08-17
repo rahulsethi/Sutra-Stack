@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Graph reads — ported from `aatma/src/mcp/graph.ts`.
+ * DIMAAG · graph reads.
  *
  * The knowledge graph is a DERIVED artifact (invariant 1: caches, indexes,
  * graphs and exports are disposable and rebuildable). Every node carries the

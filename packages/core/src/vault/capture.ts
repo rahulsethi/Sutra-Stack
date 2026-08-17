@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * THE ONLY AGENT WRITE PATH — lifted from `aatma/src/mcp/capture.ts`.
+ * DIMAAG · THE ONLY AGENT WRITE PATH. One narrow, floored, additive, audited
+ * door into the substrate.
  *
  * ── INVARIANT 6 · Writes are narrow, floored, additive, audited ────────────
  * A model can put exactly one kind of thing into a vault: a CAPTURE, in the

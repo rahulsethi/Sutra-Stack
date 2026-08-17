@@ -3,12 +3,12 @@
  * A small argument parser.
  *
  * Deliberately hand-rolled rather than taking a dependency: the CLI's whole
- * dependency set is `@sutra/core` and `@sutra/mcp`, and a governance tool whose
+ * dependency set is `@sutra/aatma-core` and `@sutra/hermes-mcp`, and a governance tool whose
  * install pulls in forty transitive packages undercuts its own pitch. This is
  * eighty lines and it does exactly what the documented surface needs.
  *
  * ── §9.7 · ARGUMENTS MUST ACTUALLY ARRIVE ──────────────────────────────────
- * `bun run aatma -- run <skill> -- args` silently dropped the arguments across
+ * A runner invoked as `<tool> -- run <skill> -- args` silently dropped the arguments across
  * THIRTEEN skills. Nothing errored; the skills just ran with no input.
  *
  * So `--` is handled explicitly and its tail is preserved verbatim as
@@ -32,6 +32,32 @@ const VALUE_FLAGS = new Set([
   "tier", "title", "section", "harness", "exposure", "profile", "since",
   "k", "limit", "vault", "config", "tags", "reason", "expires", "note",
   "format", "out", "shrink-tolerance", "max-age", "column",
+  // `sutra provider`
+  "id", "base-url", "key-env", "model", "kind",
+]);
+
+/**
+ * The flags that are DELIBERATELY boolean. Anything not here and not in
+ * VALUE_FLAGS is unknown, and `flagString` refuses to read it silently.
+ *
+ * ── WHY THIS LIST EXISTS ───────────────────────────────────────────────────
+ * Forgetting to add a flag to VALUE_FLAGS does not produce an error. It parses
+ * `--id my-llm` as `id: true` and leaves `my-llm` sitting in `positional`, where
+ * nothing looks for it. The command then reports "--id is required" while the
+ * user is staring at the `--id` they just typed.
+ *
+ * That is the same shape as the argument-dropping defect this CLI's own header
+ * documents: a runner invoked as `<tool> -- run <skill> -- args` silently
+ * discarded the args. Silent argument loss is the most confusing possible
+ * failure, because the evidence contradicts the message.
+ *
+ * So the two sets together are exhaustive, and `flagString` throws on anything
+ * outside them rather than returning `undefined`.
+ */
+const BOOLEAN_FLAGS = new Set([
+  "json", "quiet", "help", "version", "hybrid", "semantic", "apply", "force",
+  "resolve", "local", "reasoning", "enable", "prune", "dry-run", "verbose",
+  "no-color", "whatif", "what-if", "all", "yes",
 ]);
 
 /**
@@ -101,7 +127,36 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
 export function flagString(args: ParsedArgs, name: string): string | undefined {
   const v = args.flags.get(name);
-  return typeof v === "string" ? v : undefined;
+  if (typeof v === "string") return v;
+
+  // PRESENT, BUT WITH NO VALUE. The user typed `--name something` and the parser
+  // did not know `name` takes a value, so `something` went to `positional` and is
+  // now invisible to this caller. Returning `undefined` here reports "--name is
+  // required" to somebody looking straight at the flag they typed.
+  //
+  // Throwing costs one confusing minute for whoever adds the next flag. Not
+  // throwing costs an unbounded amount of time for every user who hits it.
+  // Only for a flag in NEITHER set. A DECLARED boolean read as a string is a
+  // caller mistake, not lost user input — and `--json` is passed on nearly every
+  // invocation, so throwing there would break commands that work correctly.
+  if (v === true && !VALUE_FLAGS.has(name) && !BOOLEAN_FLAGS.has(name)) {
+    throw new Error(
+      `--${name} takes a value, but the argument parser does not know that, so the value you passed ` +
+      `was DISCARDED.
+
+  Fix: add "${name}" to VALUE_FLAGS in packages/cli/src/args.ts.
+
+  ` +
+      `This is reported loudly rather than as "--${name} is required" because the second message ` +
+      `sends you looking at your own command line, where nothing is wrong.`,
+    );
+  }
+  return undefined;
+}
+
+/** Every flag name the parser knows about. Exported for the args test. */
+export function knownFlags(): { value: readonly string[]; boolean: readonly string[] } {
+  return { value: [...VALUE_FLAGS].sort(), boolean: [...BOOLEAN_FLAGS].sort() };
 }
 
 export function flagBool(args: ParsedArgs, name: string): boolean {

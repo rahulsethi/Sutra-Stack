@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * BM25 and Reciprocal-Rank Fusion — lifted from `aatma/src/mcp/hybrid.ts`.
+ * DIMAAG · BM25 and Reciprocal-Rank Fusion.
  *
  * Two pure, deterministic primitives with no dependencies and no I/O. They are
  * separated from `hybrid.ts` because they are the half of retrieval that ALWAYS

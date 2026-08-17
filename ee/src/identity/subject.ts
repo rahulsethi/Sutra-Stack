@@ -31,7 +31,7 @@
  * are asking through.
  */
 
-import { type Tier, TIER_RANK, TIER_DISPLAY, coerceTier } from "@sutra/core";
+import { type Tier, TIER_RANK, TIER_DISPLAY, coerceTier } from "@sutra/aatma-core";
 import type { Subject } from "../policy/engine.js";
 
 /** Claims as they arrive from OIDC or SAML, already verified by the gateway. */

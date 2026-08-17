@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * THE EGRESS TEST. Lifted from `aatma/src/mcp/brain-exposure.test.ts` and
+ * THE EGRESS TEST — AATMA's gate asserted over DIMAAG's corpus
  * extended to cover release gate 1 in full.
  *
  * 00-MASTER-BUILD-BRIEF.md §10.1: "with a hosted-ceiling MCP registration, a

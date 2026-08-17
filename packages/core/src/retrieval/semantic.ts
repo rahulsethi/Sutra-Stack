@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Vector retrieval — ported from `aatma/src/mcp/semantic.ts`.
+ * DIMAAG · vector retrieval.
  *
  * The embedding index is a plain JSON file the pipeline builds locally, via a
  * small Python script run through `uv`. No hosted call, no key, no network.

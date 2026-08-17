@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Configuration — ported from `aatma/src/config.ts`.
+ * AATMA · configuration resolution. Where the install root, the vault root and
+ * the exposure ceiling come from, and in what precedence.
  *
  * Three changes from the source, each with a reason:
  *

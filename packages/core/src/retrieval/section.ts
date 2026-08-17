@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Section-level reads — lifted verbatim from `aatma/src/mcp/section.ts`.
+ * DIMAAG · section-level reads.
  *
  * PURE STRING LOGIC. No vault access and no sensitivity gating live here: the
  * gate is applied UPSTREAM by `Brain.getNote()` before a body ever reaches this

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Passphrase-gated override — lifted from `aatma/src/mcp/override.ts`.
+ * AATMA · the passphrase-gated override. The one deliberate, audited, expiring
+ * widening of exposure — and it still cannot cross the secret floor.
  *
  * The concrete need this answers: a retrieval shows the public facts about a
  * person and withholds the private one. The user must be able to reveal it, on

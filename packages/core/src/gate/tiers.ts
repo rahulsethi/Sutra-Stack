@@ -2,8 +2,8 @@
 /**
  * THE TIER MODEL — the one normaliser every tier comparison goes through.
  *
- * Lifted from `aatma/src/mcp/brain.ts` (tier coercion + aliasing) and
- * `aatma/src/sensitivity-guard.ts` (TIER_RANK). Split out because six
+ * AATMA · the single tier normaliser for the whole stack. It is its own module
+ * — rather than a helper inside the gate — because six
  * re-implementations of one tier comparison across three languages is what the
  * upstream system had, and **every divergence failed open in at least one of
  * them** (ROADMAP E1). There is one rank table and one coercion function here,

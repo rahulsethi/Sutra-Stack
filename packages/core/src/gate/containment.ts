@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Hosted containment — lifted from `aatma/src/capabilities/containment.ts`.
+ * AATMA · hosted containment. What a hosted model may be handed, and what it
+ * may never be handed.
  *
  * A skill marked `inference.hosted_allowed: false` must never run in a hosted
  * context. A hosted caller (a gateway relaying to a cloud model) carries

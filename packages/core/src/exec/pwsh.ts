@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * PowerShell 7 invocation — split out of `aatma/src/dimaag-client.ts`.
+ * DIMAAG · PowerShell 7 invocation. The boundary between the TypeScript core
+ * and the pipeline that does the heavy lifting.
  *
  * ── §9.8 · `pwsh` is not `powershell` ──────────────────────────────────────
  * `pwsh` is PowerShell 7 and is cross-platform. `powershell` is Windows
@@ -154,7 +155,7 @@ export function runPwsh(
 /**
  * §9.7 · ARGUMENT-DROPPING WRAPPER HOPS.
  *
- * `bun run aatma -- run <skill> -- args` silently dropped the arguments across
+ * A runner invoked as `<tool> -- run <skill> -- args` silently dropped the arguments across
  * thirteen skills. Nothing errored; the skills simply ran with no input.
  *
  * The lesson is architectural: prefer ONE flat invocation, and test that the

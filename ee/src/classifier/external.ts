@@ -37,7 +37,7 @@
  * wrong is not offered.
  */
 
-import { type Tier, TIER_RANK, coerceTier, raiseOnly } from "@sutra/core";
+import { type Tier, TIER_RANK, coerceTier, raiseOnly } from "@sutra/aatma-core";
 
 /** What an external classification system returns about one piece of content. */
 export interface ExternalVerdict {

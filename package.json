@@ -2,7 +2,7 @@
   "name": "sutra",
   "version": "1.0.0",
   "private": true,
-  "description": "Sutra \u2014 a governed personal knowledge substrate. Your AI can reason over everything you know, and provably cannot leak what you marked private.",
+  "description": "Sutra — a governed personal knowledge substrate. Your AI can reason over everything you know, and provably cannot leak what you marked private.",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
@@ -27,15 +27,16 @@
     "check:core-alone": "node scripts/check-core-alone.mjs",
     "check:no-bun": "node scripts/check-no-bun.mjs",
     "leak-scan": "node scripts/leak-scan.mjs",
-    "verify": "npm run build && npm test && npm run check:license && npm run check:no-bun && npm run leak-scan && npm run check:diagrams && npm run build:ee && npm run test:ee && npm run check:core-alone",
+    "verify": "npm run build && npm test && npm run test:ps && npm run check:license && npm run check:no-bun && npm run leak-scan && npm run check:diagrams && npm run build:ee && npm run test:ee && npm run check:core-alone",
     "sutra": "node packages/cli/dist/bin.js",
     "build:ee": "node scripts/if-ee.mjs tsc --build ee",
     "test:ee": "node scripts/if-ee.mjs node --test ee/dist",
     "build:all": "npm run build && npm run build:ee",
-    "test:all": "npm test && npm run test:ee",
+    "test:all": "npm test && npm run test:ps && npm run test:ee",
     "sbom": "node scripts/gen-sbom.mjs",
     "diagrams": "node scripts/diagrams.mjs",
-    "check:diagrams": "node scripts/check-diagrams.mjs"
+    "check:diagrams": "node scripts/check-diagrams.mjs",
+    "test:ps": "node scripts/run-ps-tests.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.19.9",

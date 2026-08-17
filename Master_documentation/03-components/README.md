@@ -3,8 +3,8 @@
 
 | Package | What | Runtime deps | Status |
 |---|---|---|---|
-| `@sutra/core` | The governance core | **1** (`gray-matter`) | done |
-| `@sutra/mcp` | stdio JSON-RPC 2.0, 14 tools | **0** | done |
+| `@sutra/aatma-core` | The governance core | **1** (`gray-matter`) | done |
+| `@sutra/hermes-mcp` | stdio JSON-RPC 2.0, 14 tools | **0** | done |
 | `@sutra/cli` | `sutra` — every read has `--json` | 0 external | done |
 | `@sutra/daemon` | OPTIONAL. Loopback HTTP over the same gate. | 0 external | done |
 | `@sutra/dashboard` | OPTIONAL. Zero-build static UI, 6 routes. | 0 external | done |
@@ -12,7 +12,7 @@
 | `automation/` | pwsh 7 pipeline + optional Python | — | done |
 | `vault-template/` | The skeleton. **Zero notes.** | — | done |
 
-## `@sutra/core` internals
+## `@sutra/aatma-core` internals
 
 | Directory | Owns |
 |---|---|
